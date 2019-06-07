@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"io/ioutil"
 	"net"
-	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -610,6 +609,7 @@ func convertIPs(ips []string) []net.IP {
 	return converted
 }
 
+/*
 func convertURIs(uris []string) []*url.URL {
 	converted := make([]*url.URL, len(uris))
 	for i, uri := range uris {
@@ -618,3 +618,4 @@ func convertURIs(uris []string) []*url.URL {
 
 	return converted
 }
+*/

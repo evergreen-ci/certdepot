@@ -5,4 +5,4 @@ Tools for creating and storing SSL certificates.
 CertDepot is based off [certstrap](https://github.com/square/certstrap) by Square. This project heavily depends certstrap by expanding its capabilties.
 
 ## Tests
-To run tests simply run `make test` from the root directory of the project. The implementation is of
+To run tests simply run `make test` from the root directory of the project. The tests require a local mongod to be running.

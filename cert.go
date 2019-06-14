@@ -59,6 +59,10 @@ type CertificateOptions struct {
 	CAPassphrase string `bson:"ca_passphrase,omitempty" json:"ca_passphrase,omitempty" yaml:"ca_passphrase,omitempty"`
 	// Whether generated certificate should be an intermediate.
 	Intermediate bool `bson:"intermediate,omitempty" json:"intermediate,omitempty" yaml:"intermediate,omitempty"`
+
+	csr  *pkix.CertificateSigningRequest
+	key  *pkix.Key
+	cert *pkix.Certificate
 }
 
 // Init initializes a new CA.
@@ -72,7 +76,7 @@ func (opts *CertificateOptions) Init(d depot.Depot) error {
 		return errors.New("CA with specified name already exists")
 	}
 
-	key, err := opts.getOrCreatePrivateKey(formattedName)
+	key, err := opts.getOrCreatePrivateKey()
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -118,34 +122,38 @@ func (opts *CertificateOptions) Init(d depot.Depot) error {
 	return nil
 }
 
-// CertRequest creates a new certificate (CSR).
+// CertRequest creates a new certificate signing request (CSR) and key and puts
+// them in the depot.
 func (opts *CertificateOptions) CertRequest(d depot.Depot) error {
+	if _, _, err := opts.CertRequestInMemory(d); err != nil {
+		return errors.Wrap(err, "problem creating cert request and key")
+	}
+
+	return opts.PutCertRequestFromMemory(d)
+}
+
+// CertRequestInMemory is the same as CertRequest but returns the resulting
+// certificate signing request and private key without putting them in the
+// depot. Use PutCertRequestFromMemory to put the certificate in the depot.
+func (opts *CertificateOptions) CertRequestInMemory(d depot.Depot) (*pkix.CertificateSigningRequest, *pkix.Key, error) {
 	ips, err := pkix.ParseAndValidateIPs(strings.Join(opts.IP, ","))
 	if err != nil {
-		return errors.Wrapf(err, "problem parsing and validating IPs: %s", opts.IP)
+		return nil, nil, errors.Wrapf(err, "problem parsing and validating IPs: %s", opts.IP)
 	}
 
 	uris, err := pkix.ParseAndValidateURIs(strings.Join(opts.URI, ","))
 	if err != nil {
-		return errors.Wrapf(err, "problem parsing and validating URIs: %s", opts.URI)
+		return nil, nil, errors.Wrapf(err, "problem parsing and validating URIs: %s", opts.URI)
 	}
 
 	name, err := opts.getCertificateRequestName()
 	if err != nil {
-		return errors.WithStack(err)
-	}
-	formattedName, err := formatName(name)
-	if err != nil {
-		return errors.Wrap(err, "problem getting formatted name")
+		return nil, nil, errors.WithStack(err)
 	}
 
-	if depot.CheckCertificateSigningRequest(d, formattedName) || depot.CheckPrivateKey(d, formattedName) {
-		return errors.New("certificate request has existed")
-	}
-
-	key, err := opts.getOrCreatePrivateKey(formattedName)
+	key, err := opts.getOrCreatePrivateKey()
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	csr, err := pkix.CreateCertificateSigningRequest(
@@ -161,18 +169,41 @@ func (opts *CertificateOptions) CertRequest(d depot.Depot) error {
 		name,
 	)
 	if err != nil {
-		return errors.Wrap(err, "problem creating certificate request")
+		return nil, nil, errors.Wrap(err, "problem creating certificate request")
 	}
 
-	if err = depot.PutCertificateSigningRequest(d, formattedName, csr); err != nil {
+	opts.csr = csr
+	opts.key = key
+
+	return csr, key, nil
+}
+
+// PutCertRequestFromMemory stores the certificate request and key generated
+// from the options in the depot.
+func (opts *CertificateOptions) PutCertRequestFromMemory(d depot.Depot) error {
+	if opts.csr == nil || opts.key == nil {
+		return errors.New("must make cert request and key first before putting into depot")
+	}
+
+	formattedName, err := opts.getFormattedCertificateRequestName()
+	if err != nil {
+		return errors.Wrap(err, "problem getting formatted name")
+	}
+
+	if depot.CheckCertificateSigningRequest(d, formattedName) || depot.CheckPrivateKey(d, formattedName) {
+		return errors.New("certificate request has existed")
+	}
+
+	if err = depot.PutCertificateSigningRequest(d, formattedName, opts.csr); err != nil {
 		return errors.Wrap(err, "problem saving certificate request")
 	}
+
 	if opts.Passphrase != "" {
-		if err = depot.PutEncryptedPrivateKey(d, formattedName, key, []byte(opts.Passphrase)); err != nil {
+		if err = depot.PutEncryptedPrivateKey(d, formattedName, opts.key, []byte(opts.Passphrase)); err != nil {
 			return errors.Wrap(err, "problem saving encrypted private key")
 		}
 	} else {
-		if err = depot.PutPrivateKey(d, formattedName, key); err != nil {
+		if err = depot.PutPrivateKey(d, formattedName, opts.key); err != nil {
 			return errors.Wrap(err, "problem saving private key error")
 		}
 	}
@@ -182,50 +213,62 @@ func (opts *CertificateOptions) CertRequest(d depot.Depot) error {
 
 // Sign signs a CSR with a given CA for a new certificate.
 func (opts *CertificateOptions) Sign(d depot.Depot) error {
+	_, err := opts.SignInMemory(d)
+	if err != nil {
+		return errors.Wrap(err, "problem signing certificate request")
+	}
+
+	return opts.PutCertFromMemory(d)
+}
+
+// SignInMemory is the same as Sign but returns the resulting certificate
+// without putting it in the depot. Use PutCertFromMemory to put the certificate
+// in the depot.
+func (opts *CertificateOptions) SignInMemory(d depot.Depot) (*pkix.Certificate, error) {
 	if opts.Host == "" {
-		return errors.New("must provide name of host")
+		return nil, errors.New("must provide name of host")
 	}
 	if opts.CA == "" {
-		return errors.New("must provide name of CA")
+		return nil, errors.New("must provide name of CA")
 	}
 	formattedReqName := strings.Replace(opts.Host, " ", "_", -1)
 	formattedCAName := strings.Replace(opts.CA, " ", "_", -1)
 
-	if depot.CheckCertificate(d, formattedReqName) {
-		return errors.New("certificate has existed")
-	}
-
-	csr, err := depot.GetCertificateSigningRequest(d, formattedReqName)
-	if err != nil {
-		return errors.Wrap(err, "problem getting host's certificate signing request")
+	csr := opts.csr
+	if csr == nil {
+		var err error
+		csr, err = depot.GetCertificateSigningRequest(d, formattedReqName)
+		if err != nil {
+			return nil, errors.Wrap(err, "problem getting host's certificate signing request")
+		}
 	}
 	crt, err := depot.GetCertificate(d, formattedCAName)
 	if err != nil {
-		return errors.Wrap(err, "problem getting CA certificate")
+		return nil, errors.Wrap(err, "problem getting CA certificate")
 	}
 
 	// validate that crt is allowed to sign certificates
 	rawCrt, err := crt.GetRawCertificate()
 	if err != nil {
-		return errors.Wrap(err, "problem getting raw CA certificate")
+		return nil, errors.Wrap(err, "problem getting raw CA certificate")
 	}
 	// we punt on checking BasicConstraintsValid and checking MaxPathLen. The goal
 	// is to prevent accidentally creating invalid certificates, not protecting
 	// against malicious input.
 	if !rawCrt.IsCA {
-		return errors.Errorf("%s is not allowed to sign certificates", opts.CA)
+		return nil, errors.Errorf("%s is not allowed to sign certificates", opts.CA)
 	}
 
 	var key *pkix.Key
 	if opts.CAPassphrase == "" {
 		key, err = depot.GetPrivateKey(d, formattedCAName)
 		if err != nil {
-			return errors.Wrap(err, "problem getting unencrypted (assumed) CA key")
+			return nil, errors.Wrap(err, "problem getting unencrypted (assumed) CA key")
 		}
 	} else {
 		key, err = depot.GetEncryptedPrivateKey(d, formattedCAName, []byte(opts.CAPassphrase))
 		if err != nil {
-			return errors.Wrap(err, "problem getting encrypted CA key")
+			return nil, errors.Wrap(err, "problem getting encrypted CA key")
 		}
 	}
 
@@ -237,14 +280,39 @@ func (opts *CertificateOptions) Sign(d depot.Depot) error {
 		crtOut, err = pkix.CreateCertificateHost(crt, key, csr, expiresTime)
 	}
 	if err != nil {
-		return errors.Wrap(err, "problem creating certificate")
+		return nil, errors.Wrap(err, "problem creating certificate")
 	}
 
-	if err = depot.PutCertificate(d, formattedReqName, crtOut); err != nil {
-		return errors.Wrap(err, "problem saving certificate")
+	opts.cert = crtOut
+
+	return crtOut, nil
+}
+
+// PutCertFromMemory stores the certificate generated from the options in the
+// depot.
+func (opts *CertificateOptions) PutCertFromMemory(d depot.Depot) error {
+	if opts.cert == nil {
+		return errors.New("must sign cert first before putting into depot")
+	}
+	formattedReqName := strings.Replace(opts.Host, " ", "_", -1)
+
+	if depot.CheckCertificate(d, formattedReqName) {
+		return errors.New("certificate has existed")
 	}
 
-	return nil
+	return errors.Wrap(depot.PutCertificate(d, formattedReqName, opts.cert), "problem saving certificate")
+}
+
+func (opts CertificateOptions) getFormattedCertificateRequestName() (string, error) {
+	name, err := opts.getCertificateRequestName()
+	if err != nil {
+		return "", errors.Wrap(err, "could not get name for certificate request")
+	}
+	filenameAcceptable, err := regexp.Compile("[^a-zA-Z0-9._-]")
+	if err != nil {
+		return "", errors.Wrap(err, "error compiling regex")
+	}
+	return string(filenameAcceptable.ReplaceAll([]byte(name), []byte("_"))), nil
 }
 
 func (opts CertificateOptions) getCertificateRequestName() (string, error) {
@@ -258,7 +326,7 @@ func (opts CertificateOptions) getCertificateRequestName() (string, error) {
 	}
 }
 
-func (opts CertificateOptions) getOrCreatePrivateKey(name string) (*pkix.Key, error) {
+func (opts CertificateOptions) getOrCreatePrivateKey() (*pkix.Key, error) {
 	var key *pkix.Key
 	if opts.Key != "" {
 		keyBytes, err := ioutil.ReadFile(opts.Key)
@@ -280,14 +348,6 @@ func (opts CertificateOptions) getOrCreatePrivateKey(name string) (*pkix.Key, er
 		}
 	}
 	return key, nil
-}
-
-func formatName(name string) (string, error) {
-	var filenameAcceptable, err = regexp.Compile("[^a-zA-Z0-9._-]")
-	if err != nil {
-		return "", errors.Wrap(err, "problem compiling regex")
-	}
-	return string(filenameAcceptable.ReplaceAll([]byte(name), []byte("_"))), nil
 }
 
 func getNameAndKey(tag *depot.Tag) (string, string) {

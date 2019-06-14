@@ -13,23 +13,15 @@ import (
 )
 
 func TestDB(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	uri := "mongodb://localhost:27017"
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-	require.NoError(t, err)
-
 	const (
 		databaseName   = "certDepot"
 		collectionName = "certs"
+		dbTimeout      = 5 * time.Second
 	)
-	coll := client.Database(databaseName).Collection(collectionName)
-	for name, testCase := range map[string]func(t *testing.T, md *mongoDepot){
-		"PutTTL": func(t *testing.T, md *mongoDepot) {
-			for subTestName, subTestCase := range map[string]func(t *testing.T){
-				"SetsValueOnExistingDocument": func(t *testing.T) {
-
+	for name, testCase := range map[string]func(ctx context.Context, t *testing.T, md *mongoDepot, client *mongo.Client, coll *mongo.Collection){
+		"PutTTL": func(ctx context.Context, t *testing.T, md *mongoDepot, client *mongo.Client, coll *mongo.Collection) {
+			for subTestName, subTestCase := range map[string]func(ctx context.Context, t *testing.T){
+				"SetsValueOnExistingDocument": func(ctx context.Context, t *testing.T) {
 					name := "user"
 					user := &User{
 						ID:            name,
@@ -48,7 +40,7 @@ func TestDB(t *testing.T) {
 					require.NoError(t, coll.FindOne(ctx, bson.M{userIDKey: name}).Decode(dbUser))
 					assert.Equal(t, user.ID, dbUser.ID)
 				},
-				"DoesNotInsert": func(t *testing.T) {
+				"DoesNotInsert": func(ctx context.Context, t *testing.T) {
 					name := "user"
 					ttl := time.Now()
 					require.Error(t, md.PutTTL(name, ttl))
@@ -61,13 +53,15 @@ func TestDB(t *testing.T) {
 					defer func() {
 						require.NoError(t, coll.Drop(ctx))
 					}()
-					subTestCase(t)
+					tctx, cancel := context.WithTimeout(ctx, dbTimeout)
+					defer cancel()
+					subTestCase(tctx, t)
 				})
 			}
 		},
-		"FindExpiresBefore": func(t *testing.T, md *mongoDepot) {
-			for subTestName, subTestCase := range map[string]func(t *testing.T){
-				"MatchesExpired": func(t *testing.T) {
+		"FindExpiresBefore": func(ctx context.Context, t *testing.T, md *mongoDepot, client *mongo.Client, coll *mongo.Collection) {
+			for subTestName, subTestCase := range map[string]func(ctx context.Context, t *testing.T){
+				"MatchesExpired": func(ctx context.Context, t *testing.T) {
 					name1 := "user1"
 					name2 := "user2"
 					ttl := time.Now()
@@ -90,7 +84,7 @@ func TestDB(t *testing.T) {
 					require.Len(t, dbUsers, 1)
 					assert.Equal(t, userBeforeExpiration.ID, dbUsers[0].ID)
 				},
-				"IgnoresDocumentsWithoutTTL": func(t *testing.T) {
+				"IgnoresDocumentsWithoutTTL": func(ctx context.Context, t *testing.T) {
 					name := "user"
 					user := &User{
 						ID:            name,
@@ -111,13 +105,15 @@ func TestDB(t *testing.T) {
 					defer func() {
 						require.NoError(t, coll.Drop(ctx))
 					}()
-					subTestCase(t)
+					tctx, cancel := context.WithTimeout(ctx, dbTimeout)
+					defer cancel()
+					subTestCase(tctx, t)
 				})
 			}
 		},
-		"DeleteExpiresBefore": func(t *testing.T, md *mongoDepot) {
-			for subTestName, subTestCase := range map[string]func(t *testing.T){
-				"MatchesExpired": func(t *testing.T) {
+		"DeleteExpiresBefore": func(ctx context.Context, t *testing.T, md *mongoDepot, client *mongo.Client, coll *mongo.Collection) {
+			for subTestName, subTestCase := range map[string]func(ctx context.Context, t *testing.T){
+				"MatchesExpired": func(ctx context.Context, t *testing.T) {
 					name1 := "user1"
 					name2 := "user2"
 					ttl := time.Now()
@@ -143,7 +139,7 @@ func TestDB(t *testing.T) {
 					require.Len(t, dbUsers, 1)
 					assert.Equal(t, userAfterExpiration.ID, dbUsers[0].ID)
 				},
-				"IgnoresDocumentsWithoutTTL": func(t *testing.T) {
+				"IgnoresDocumentsWithoutTTL": func(ctx context.Context, t *testing.T) {
 					name := "user"
 					user := &User{
 						ID:            name,
@@ -165,13 +161,22 @@ func TestDB(t *testing.T) {
 					defer func() {
 						require.NoError(t, coll.Drop(ctx))
 					}()
-					subTestCase(t)
+					tctx, cancel := context.WithTimeout(ctx, dbTimeout)
+					defer cancel()
+					subTestCase(tctx, t)
 				})
 			}
 		},
 	} {
 
 		t.Run(name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			uri := "mongodb://localhost:27017"
+			client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+			require.NoError(t, err)
+
 			opts := &MongoDBOptions{
 				MongoDBURI:     uri,
 				DatabaseName:   databaseName,
@@ -182,7 +187,7 @@ func TestDB(t *testing.T) {
 			md, ok := d.(*mongoDepot)
 			require.True(t, ok)
 
-			testCase(t, md)
+			testCase(ctx, t, md, client, client.Database(databaseName).Collection(collectionName))
 		})
 	}
 }

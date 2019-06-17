@@ -70,7 +70,7 @@ func (opts *CertificateOptions) Init(d depot.Depot) error {
 	if opts.CommonName == "" {
 		return errors.New("must provide common name of CA")
 	}
-	formattedName := strings.Replace(opts.CommonName, " ", "_", -1)
+	formattedName := formatDepotName(opts.CommonName)
 
 	if depot.CheckCertificate(d, formattedName) || depot.CheckPrivateKey(d, formattedName) {
 		return errors.New("CA with specified name already exists")
@@ -261,8 +261,8 @@ func (opts *CertificateOptions) SignInMemory(d depot.Depot) (*pkix.Certificate, 
 	if opts.CA == "" {
 		return nil, errors.New("must provide name of CA")
 	}
-	formattedReqName := strings.Replace(opts.Host, " ", "_", -1)
-	formattedCAName := strings.Replace(opts.CA, " ", "_", -1)
+	formattedReqName := formatDepotName(opts.Host)
+	formattedCAName := formatDepotName(opts.CA)
 
 	var csr *pkix.CertificateSigningRequest
 	if opts.certRequestedInMemory() {

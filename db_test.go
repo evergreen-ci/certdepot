@@ -167,6 +167,57 @@ func TestDB(t *testing.T) {
 				})
 			}
 		},
+		"FindUser": func(ctx context.Context, t *testing.T, md *mongoDepot, client *mongo.Client, coll *mongo.Collection) {
+			for subTestName, subTestCase := range map[string]func(ctx context.Context, t *testing.T){
+				"ErrorsIfNotFound": func(ctx context.Context, t *testing.T) {
+					_, err := md.FindUser("nonexistent")
+					assert.Error(t, err)
+				},
+				"MatchesUser": func(ctx context.Context, t *testing.T) {
+					user := &User{ID: "user"}
+					_, err := coll.InsertOne(ctx, user)
+					require.NoError(t, err)
+					dbUser, err := md.FindUser(user.ID)
+					require.NoError(t, err)
+					assert.Equal(t, user, dbUser)
+				},
+			} {
+				t.Run(subTestName, func(t *testing.T) {
+					require.NoError(t, coll.Drop(ctx))
+					defer func() {
+						require.NoError(t, coll.Drop(ctx))
+					}()
+					tctx, cancel := context.WithTimeout(ctx, dbTimeout)
+					defer cancel()
+					subTestCase(tctx, t)
+				})
+			}
+		},
+		"DeleteUser": func(ctx context.Context, t *testing.T, md *mongoDepot, client *mongo.Client, coll *mongo.Collection) {
+			for subTestName, subTestCase := range map[string]func(ctx context.Context, t *testing.T){
+				"ErrorsIfNotFound": func(ctx context.Context, t *testing.T) {
+					assert.Error(t, md.DeleteUser("nonexistent"))
+				},
+				"MatchesUser": func(ctx context.Context, t *testing.T) {
+					user := &User{ID: "user"}
+					_, err := coll.InsertOne(ctx, user)
+					require.NoError(t, err)
+					assert.NoError(t, md.DeleteUser(user.ID))
+					dbUser := &User{}
+					assert.Equal(t, mongo.ErrNoDocuments, coll.FindOne(ctx, bson.M{userIDKey: user.ID}).Decode(dbUser))
+				},
+			} {
+				t.Run(subTestName, func(t *testing.T) {
+					require.NoError(t, coll.Drop(ctx))
+					defer func() {
+						require.NoError(t, coll.Drop(ctx))
+					}()
+					tctx, cancel := context.WithTimeout(ctx, dbTimeout)
+					defer cancel()
+					subTestCase(tctx, t)
+				})
+			}
+		},
 	} {
 
 		t.Run(name, func(t *testing.T) {

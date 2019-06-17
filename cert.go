@@ -119,6 +119,11 @@ func (opts *CertificateOptions) Init(d depot.Depot) error {
 		return errors.Wrap(err, "problem saving certificate revocation list")
 	}
 
+	if md, ok := d.(*mongoDepot); ok {
+		if err = md.PutTTL(formattedName, expiresTime); err != nil {
+			return errors.Wrap(err, "problem setting certificate TTL")
+		}
+	}
 	return nil
 }
 
@@ -316,7 +321,7 @@ func (opts *CertificateOptions) SignInMemory(d depot.Depot) (*pkix.Certificate, 
 }
 
 // PutCertFromMemory stores the certificate generated from the options in the
-// depot.
+// depot, along with the expiration TTL on the certificate.
 func (opts *CertificateOptions) PutCertFromMemory(d depot.Depot) error {
 	if !opts.signedInMemory() {
 		return errors.New("must sign cert first before putting into depot")
@@ -327,7 +332,21 @@ func (opts *CertificateOptions) PutCertFromMemory(d depot.Depot) error {
 		return errors.New("certificate has existed")
 	}
 
-	return errors.Wrap(depot.PutCertificate(d, formattedReqName, opts.crt), "problem saving certificate")
+	if err := depot.PutCertificate(d, formattedReqName, opts.crt); err != nil {
+		return errors.Wrap(err, "problem saving certificate")
+	}
+
+	if md, ok := d.(*mongoDepot); ok {
+		rawCrt, err := opts.crt.GetRawCertificate()
+		if err != nil {
+			return errors.Wrap(err, "problem getting raw certificate")
+		}
+		if err = md.PutTTL(formattedReqName, rawCrt.NotAfter); err != nil {
+			return errors.Wrap(err, "problem saving certificate TTL")
+		}
+	}
+
+	return nil
 }
 
 func (opts CertificateOptions) getFormattedCertificateRequestName() (string, error) {

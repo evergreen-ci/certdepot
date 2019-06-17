@@ -60,9 +60,9 @@ type CertificateOptions struct {
 	// Whether generated certificate should be an intermediate.
 	Intermediate bool `bson:"intermediate,omitempty" json:"intermediate,omitempty" yaml:"intermediate,omitempty"`
 
-	csr  *pkix.CertificateSigningRequest
-	key  *pkix.Key
-	cert *pkix.Certificate
+	csr *pkix.CertificateSigningRequest
+	key *pkix.Key
+	crt *pkix.Certificate
 }
 
 // Init initializes a new CA.
@@ -132,10 +132,18 @@ func (opts *CertificateOptions) CertRequest(d depot.Depot) error {
 	return opts.PutCertRequestFromMemory(d)
 }
 
+func (opts *CertificateOptions) certRequestedInMemory() bool {
+	return opts.csr != nil && opts.key != nil
+}
+
 // CertRequestInMemory is the same as CertRequest but returns the resulting
 // certificate signing request and private key without putting them in the
 // depot. Use PutCertRequestFromMemory to put the certificate in the depot.
 func (opts *CertificateOptions) CertRequestInMemory(d depot.Depot) (*pkix.CertificateSigningRequest, *pkix.Key, error) {
+	if opts.certRequestedInMemory() {
+		return opts.csr, opts.key, nil
+	}
+
 	ips, err := pkix.ParseAndValidateIPs(strings.Join(opts.IP, ","))
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "problem parsing and validating IPs: %s", opts.IP)
@@ -181,8 +189,8 @@ func (opts *CertificateOptions) CertRequestInMemory(d depot.Depot) (*pkix.Certif
 // PutCertRequestFromMemory stores the certificate request and key generated
 // from the options in the depot.
 func (opts *CertificateOptions) PutCertRequestFromMemory(d depot.Depot) error {
-	if opts.csr == nil || opts.key == nil {
-		return errors.New("must make cert request and key first before putting into depot")
+	if !opts.certRequestedInMemory() {
+		return errors.New("must make cert request first before putting into depot")
 	}
 
 	formattedName, err := opts.getFormattedCertificateRequestName()
@@ -221,10 +229,17 @@ func (opts *CertificateOptions) Sign(d depot.Depot) error {
 	return opts.PutCertFromMemory(d)
 }
 
+func (opts *CertificateOptions) signedInMemory() bool {
+	return opts.crt != nil
+}
+
 // SignInMemory is the same as Sign but returns the resulting certificate
 // without putting it in the depot. Use PutCertFromMemory to put the certificate
 // in the depot.
 func (opts *CertificateOptions) SignInMemory(d depot.Depot) (*pkix.Certificate, error) {
+	if opts.signedInMemory() {
+		return opts.crt, nil
+	}
 	if opts.Host == "" {
 		return nil, errors.New("must provide name of host")
 	}
@@ -234,8 +249,10 @@ func (opts *CertificateOptions) SignInMemory(d depot.Depot) (*pkix.Certificate, 
 	formattedReqName := strings.Replace(opts.Host, " ", "_", -1)
 	formattedCAName := strings.Replace(opts.CA, " ", "_", -1)
 
-	csr := opts.csr
-	if csr == nil {
+	var csr *pkix.CertificateSigningRequest
+	if opts.certRequestedInMemory() {
+		csr = opts.csr
+	} else {
 		var err error
 		csr, err = depot.GetCertificateSigningRequest(d, formattedReqName)
 		if err != nil {
@@ -283,7 +300,7 @@ func (opts *CertificateOptions) SignInMemory(d depot.Depot) (*pkix.Certificate, 
 		return nil, errors.Wrap(err, "problem creating certificate")
 	}
 
-	opts.cert = crtOut
+	opts.crt = crtOut
 
 	return crtOut, nil
 }
@@ -291,7 +308,7 @@ func (opts *CertificateOptions) SignInMemory(d depot.Depot) (*pkix.Certificate, 
 // PutCertFromMemory stores the certificate generated from the options in the
 // depot.
 func (opts *CertificateOptions) PutCertFromMemory(d depot.Depot) error {
-	if opts.cert == nil {
+	if !opts.signedInMemory() {
 		return errors.New("must sign cert first before putting into depot")
 	}
 	formattedReqName := strings.Replace(opts.Host, " ", "_", -1)
@@ -300,7 +317,7 @@ func (opts *CertificateOptions) PutCertFromMemory(d depot.Depot) error {
 		return errors.New("certificate has existed")
 	}
 
-	return errors.Wrap(depot.PutCertificate(d, formattedReqName, opts.cert), "problem saving certificate")
+	return errors.Wrap(depot.PutCertificate(d, formattedReqName, opts.crt), "problem saving certificate")
 }
 
 func (opts CertificateOptions) getFormattedCertificateRequestName() (string, error) {

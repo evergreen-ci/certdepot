@@ -122,6 +122,16 @@ func (opts *CertificateOptions) Init(d depot.Depot) error {
 	return nil
 }
 
+// Reset clears the cached results of CertificateOptions so that the options can
+// be changed after a certificate has already been requested or signed. For
+// example, if the options have been modified, a new certificate request can be
+// made with the new options by using Reset.
+func (opts *CertificateOptions) Reset() {
+	opts.csr = nil
+	opts.key = nil
+	opts.crt = nil
+}
+
 // CertRequest creates a new certificate signing request (CSR) and key and puts
 // them in the depot.
 func (opts *CertificateOptions) CertRequest(d depot.Depot) error {

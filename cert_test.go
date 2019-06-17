@@ -329,6 +329,8 @@ func TestCertRequest(t *testing.T) {
 		*/
 	} {
 		t.Run(test.name, func(t *testing.T) {
+			opts.Reset()
+			defer opts.Reset()
 			test.changeOpts()
 			err = opts.CertRequest(d)
 
@@ -371,13 +373,6 @@ func TestInMemory(t *testing.T) {
 			catcher.Add(d.Delete(crtTag))
 		}
 		return catcher.Resolve()
-	}
-
-	// Resets in-memory state
-	resetOpts := func(opts *CertificateOptions) {
-		opts.csr = nil
-		opts.key = nil
-		opts.crt = nil
 	}
 
 	for testName, testCase := range map[string]func(t *testing.T, d depot.Depot, opts *CertificateOptions){
@@ -460,11 +455,11 @@ func TestInMemory(t *testing.T) {
 				t.Run(subTestName, func(t *testing.T) {
 					name, err := opts.getFormattedCertificateRequestName()
 					require.NoError(t, err)
+					opts.Reset()
 					require.NoError(t, clearByName(d, name))
-					resetOpts(opts)
 					defer func() {
+						opts.Reset()
 						assert.NoError(t, clearByName(d, name))
-						resetOpts(opts)
 					}()
 
 					subTestCase(t, name)
@@ -501,11 +496,11 @@ func TestInMemory(t *testing.T) {
 				t.Run(subTestName, func(t *testing.T) {
 					name, err := opts.getFormattedCertificateRequestName()
 					require.NoError(t, err)
+					opts.Reset()
 					require.NoError(t, clearByName(d, name))
-					resetOpts(opts)
 					defer func() {
+						opts.Reset()
 						assert.NoError(t, clearByName(d, name))
-						resetOpts(opts)
 					}()
 
 					subTestCase(t, name)
@@ -587,11 +582,11 @@ func TestInMemory(t *testing.T) {
 				t.Run(subTestName, func(t *testing.T) {
 					name, err := opts.getFormattedCertificateRequestName()
 					require.NoError(t, err)
+					opts.Reset()
 					require.NoError(t, clearByName(d, name))
-					resetOpts(opts)
 					defer func() {
+						opts.Reset()
 						assert.NoError(t, clearByName(d, name))
-						resetOpts(opts)
 					}()
 
 					subTestCase(t, name)
@@ -620,12 +615,12 @@ func TestInMemory(t *testing.T) {
 				t.Run(subTestName, func(t *testing.T) {
 					name, err := opts.getFormattedCertificateRequestName()
 					require.NoError(t, err)
+					opts.Reset()
 					require.NoError(t, clearByName(d, name))
-					resetOpts(opts)
 
 					defer func() {
+						opts.Reset()
 						assert.NoError(t, clearByName(d, name))
-						resetOpts(opts)
 					}()
 
 					subTestCase(t, name)
@@ -821,6 +816,12 @@ func TestSign(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
+			crtOpts.Reset()
+			csrOpts.Reset()
+			defer func() {
+				csrOpts.Reset()
+				crtOpts.Reset()
+			}()
 			test.changeOpts()
 			err = crtOpts.Sign(d)
 
@@ -910,6 +911,7 @@ func TestCreateCertificateOnExpiration(t *testing.T) {
 	assert.True(t, rawUserCrt.NotAfter.After(time.Now().Add(23*time.Hour)))
 
 	// user cert exists and expiring
+	opts.Reset()
 	opts.Expires = time.Hour
 	created, err = opts.CreateCertificateOnExpiration(d, 25*time.Hour)
 	assert.NoError(t, err)

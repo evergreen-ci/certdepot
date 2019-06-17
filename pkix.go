@@ -69,7 +69,7 @@ func GetPrivateKey(d depot.Depot, name string) (key *pkix.Key, err error) {
 
 // DeletePrivateKey removes a private key file for a given host name from the
 // depot. This works for both encrypted and unencrypted private keys.
-func RemovePrivateKey(d depot.Depot, name string) error {
+func DeletePrivateKey(d depot.Depot, name string) error {
 	return d.Delete(depot.PrivKeyTag(name))
 }
 

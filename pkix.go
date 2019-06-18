@@ -5,42 +5,43 @@ import (
 	"github.com/square/certstrap/pkix"
 )
 
-// CrtTag returns a tag corresponding to a certificate
+// CrtTag returns a tag corresponding to a certificate.
 func CrtTag(prefix string) *depot.Tag {
 	return depot.CrtTag(prefix)
 }
 
-// PrivKeyTag returns a tag corresponding to a private key
+// PrivKeyTag returns a tag corresponding to a private key.
 func PrivKeyTag(prefix string) *depot.Tag {
 	return depot.PrivKeyTag(prefix)
 }
 
-// CsrTag returns a tag corresponding to a certificate signature request file
+// CsrTag returns a tag corresponding to a certificate signature request file.
 func CsrTag(prefix string) *depot.Tag {
 	return depot.CsrTag(prefix)
 }
 
-// CrlTag returns a tag corresponding to a certificate revocation list
+// CrlTag returns a tag corresponding to a certificate revocation list.
 func CrlTag(prefix string) *depot.Tag {
 	return depot.CrlTag(prefix)
 }
 
-// GetNameFromCrtTag returns the host name from a certificate file tag
+// GetNameFromCrtTag returns the host name from a certificate file tag.
 func GetNameFromCrtTag(tag *depot.Tag) string {
 	return depot.GetNameFromCrtTag(tag)
 }
 
-// GetNameFromPrivKeyTag returns the host name from a private key file tag
+// GetNameFromPrivKeyTag returns the host name from a private key file tag.
 func GetNameFromPrivKeyTag(tag *depot.Tag) string {
 	return depot.GetNameFromPrivKeyTag(tag)
 }
 
-// GetNameFromCsrTag returns the host name from a certificate request file tag
+// GetNameFromCsrTag returns the host name from a certificate request file tag.
 func GetNameFromCsrTag(tag *depot.Tag) string {
 	return depot.GetNameFromCsrTag(tag)
 }
 
-// GetNameFromCrlTag returns the host name from a certificate revocation list file tag
+// GetNameFromCrlTag returns the host name from a certificate revocation list
+// file tag.
 func GetNameFromCrlTag(tag *depot.Tag) string {
 	return depot.GetNameFromCrlTag(tag)
 }

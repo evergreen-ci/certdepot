@@ -6,7 +6,8 @@ import "github.com/square/certstrap/depot"
 // need to vendor certdepot.
 type Depot depot.Depot
 
-// Wrapper to create a FileDepot certdepot.Depot.
+// NewFileDepot is a wrapper to create a FileDepot wrapped with
+// certdepot.Depot.
 func NewFileDepot(dir string) (Depot, error) {
 	return depot.NewFileDepot(dir)
 }

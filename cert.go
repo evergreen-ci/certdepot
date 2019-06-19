@@ -206,8 +206,6 @@ func (opts *CertificateOptions) CertRequestInMemory() (*pkix.CertificateSigningR
 // PutCertRequestFromMemory stores the certificate request and key generated
 // from the options in the depot.
 func (opts *CertificateOptions) PutCertRequestFromMemory(wd depot.Depot) error {
-	d := depot.Depot(wd)
-
 	if !opts.certRequestedInMemory() {
 		return errors.New("must make cert request first before putting into depot")
 	}
@@ -217,20 +215,20 @@ func (opts *CertificateOptions) PutCertRequestFromMemory(wd depot.Depot) error {
 		return errors.Wrap(err, "problem getting formatted name")
 	}
 
-	if depot.CheckCertificateSigningRequest(d, formattedName) || depot.CheckPrivateKey(d, formattedName) {
+	if depot.CheckCertificateSigningRequest(wd, formattedName) || depot.CheckPrivateKey(wd, formattedName) {
 		return errors.New("certificate request has existed")
 	}
 
-	if err = depot.PutCertificateSigningRequest(d, formattedName, opts.csr); err != nil {
+	if err = depot.PutCertificateSigningRequest(wd, formattedName, opts.csr); err != nil {
 		return errors.Wrap(err, "problem saving certificate request")
 	}
 
 	if opts.Passphrase != "" {
-		if err = depot.PutEncryptedPrivateKey(d, formattedName, opts.key, []byte(opts.Passphrase)); err != nil {
+		if err = depot.PutEncryptedPrivateKey(wd, formattedName, opts.key, []byte(opts.Passphrase)); err != nil {
 			return errors.Wrap(err, "problem saving encrypted private key")
 		}
 	} else {
-		if err = depot.PutPrivateKey(d, formattedName, opts.key); err != nil {
+		if err = depot.PutPrivateKey(wd, formattedName, opts.key); err != nil {
 			return errors.Wrap(err, "problem saving private key error")
 		}
 	}

@@ -122,11 +122,10 @@ func (opts *CertificateOptions) Init(wd Depot) error {
 	}
 
 	if md, ok := d.(*mongoDepot); ok {
-		rawCrt, err := getRawCertificate(d, formattedName)
+		rawCrt, err := crt.GetRawCertificate()
 		if err != nil {
 			return errors.Wrap(err, "problem getting raw cert")
 		}
-
 		if err = md.PutTTL(formattedName, rawCrt.NotAfter); err != nil {
 			return errors.Wrap(err, "problem setting certificate TTL")
 		}

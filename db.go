@@ -13,7 +13,7 @@ import (
 func (m *mongoDepot) PutTTL(name string, expiration time.Time) error {
 	formattedName := strings.Replace(name, " ", "_", -1)
 	updateRes, err := m.client.Database(m.databaseName).Collection(m.collectionName).UpdateOne(m.ctx,
-		bson.D{{Key: userIDKey, Value: formattedName}},
+		bson.M{userIDKey: formattedName},
 		bson.M{"$set": bson.M{userTTLKey: expiration}})
 	if err != nil {
 		return errors.Wrap(err, "problem updating TTL in the database")
@@ -22,6 +22,17 @@ func (m *mongoDepot) PutTTL(name string, expiration time.Time) error {
 		return errors.Errorf("update did not change TTL for user %s", name)
 	}
 	return nil
+}
+
+func (m *mongoDepot) GetTTL(name string) (time.Time, error) {
+	formattedName := strings.Replace(name, " ", "_", -1)
+	var user User
+	if err := m.client.Database(m.databaseName).Collection(m.collectionName).FindOne(m.ctx,
+		bson.M{userIDKey: formattedName},
+	).Decode(&user); err != nil {
+		return time.Time{}, errors.Wrap(err, "could not get TTL from database")
+	}
+	return user.TTL, nil
 }
 
 // FindExpiresBefore finds all Users that expire before the given cutoff time.

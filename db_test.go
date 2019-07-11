@@ -39,6 +39,7 @@ func TestDB(t *testing.T) {
 					dbUser := &User{}
 					require.NoError(t, coll.FindOne(ctx, bson.M{userIDKey: name}).Decode(dbUser))
 					assert.Equal(t, user.ID, dbUser.ID)
+					assert.WithinDuration(t, user.TTL, dbUser.TTL, time.Second)
 				},
 				"DoesNotInsert": func(ctx context.Context, t *testing.T) {
 					name := "user"
@@ -51,7 +52,44 @@ func TestDB(t *testing.T) {
 				t.Run(subTestName, func(t *testing.T) {
 					require.NoError(t, coll.Drop(ctx))
 					defer func() {
-						require.NoError(t, coll.Drop(ctx))
+						assert.NoError(t, coll.Drop(ctx))
+					}()
+					tctx, cancel := context.WithTimeout(ctx, dbTimeout)
+					defer cancel()
+					subTestCase(tctx, t)
+				})
+			}
+		},
+		"GetTTL": func(ctx context.Context, t *testing.T, md *mongoDepot, client *mongo.Client, coll *mongo.Collection) {
+			for subTestName, subTestCase := range map[string]func(ctx context.Context, t *testing.T){
+				"FailsForNonexistentDocument": func(ctx context.Context, t *testing.T) {
+					_, err := md.GetTTL("nonexistent")
+					assert.Error(t, err)
+				},
+				"PassesForExistingDocument": func(ctx context.Context, t *testing.T) {
+					name := "user"
+					expiration := time.Now()
+					user := &User{
+						ID:            name,
+						Cert:          "cert",
+						PrivateKey:    "key",
+						CertReq:       "certReq",
+						CertRevocList: "certRevocList",
+						TTL:           expiration,
+					}
+					_, err := coll.InsertOne(ctx, user)
+					require.NoError(t, err)
+
+					dbExpiration, err := md.GetTTL(name)
+					require.NoError(t, err)
+
+					assert.WithinDuration(t, expiration, dbExpiration, time.Second)
+				},
+			} {
+				t.Run(subTestName, func(t *testing.T) {
+					require.NoError(t, coll.Drop(ctx))
+					defer func() {
+						assert.NoError(t, coll.Drop(ctx))
 					}()
 					tctx, cancel := context.WithTimeout(ctx, dbTimeout)
 					defer cancel()
@@ -103,7 +141,7 @@ func TestDB(t *testing.T) {
 				t.Run(subTestName, func(t *testing.T) {
 					require.NoError(t, coll.Drop(ctx))
 					defer func() {
-						require.NoError(t, coll.Drop(ctx))
+						assert.NoError(t, coll.Drop(ctx))
 					}()
 					tctx, cancel := context.WithTimeout(ctx, dbTimeout)
 					defer cancel()
@@ -159,7 +197,7 @@ func TestDB(t *testing.T) {
 				t.Run(subTestName, func(t *testing.T) {
 					require.NoError(t, coll.Drop(ctx))
 					defer func() {
-						require.NoError(t, coll.Drop(ctx))
+						assert.NoError(t, coll.Drop(ctx))
 					}()
 					tctx, cancel := context.WithTimeout(ctx, dbTimeout)
 					defer cancel()

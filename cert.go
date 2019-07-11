@@ -122,7 +122,7 @@ func (opts *CertificateOptions) Init(wd Depot) error {
 	}
 
 	if md, ok := d.(*mongoDepot); ok {
-		rawCrt, err := getRawCertificate(depot.Depot(d), formattedName)
+		rawCrt, err := getRawCertificate(d, formattedName)
 		if err != nil {
 			return errors.Wrap(err, "problem getting raw cert")
 		}

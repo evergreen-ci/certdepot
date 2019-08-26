@@ -12,7 +12,7 @@ Motivation
 ----------
 
 Certdepot is based off `certstrap <https://github.com/square/certstrap>`_ by
-Square. This project heavily depends certstrap by expanding its capabilties.
+Square. This project heavily depends certstrap by expanding its capabilities.
 
 Features
 --------
@@ -29,7 +29,7 @@ MongoDB Backed Depot
 
 Certdepot implements a certstrap 
 `depot <https://godoc.org/github.com/square/certstrap/depot#Depot>`_ backed by
-MongoDB. This facilitates the storing and fetching of SSL certifcates to and
+MongoDB. This facilitates the storing and fetching of SSL certificates to and
 from a Mongo database. There are various functions for maintaining the depot,
 such as checking for expiration and rotating certs.
 

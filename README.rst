@@ -93,7 +93,8 @@ tests require a local mongod to be running.
 Documentation
 -------------
 
-See the `certdepot <https://godoc.org/github.com/evergreen-ci/certdepot>`_ for
+See the 
+`certdepot godoc <https://godoc.org/github.com/evergreen-ci/certdepot>`_ for
 complete documentation of certdepot.
 
 See the `certstrap godoc <https://godoc.org/github.com/square/certstrap>`_ for

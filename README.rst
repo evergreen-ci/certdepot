@@ -38,8 +38,8 @@ Bootstrap
 ~~~~~~~~~
 
 Bootsrapping a depot facilitates creating a certificate depot with both a CA
-and service certificate. `BootstrapDepot` currently supports bootstrapping
-`FileDepots` and `MongoDepots`.
+and service certificate. ``BootstrapDepot`` currently supports bootstrapping
+``FileDepots`` and ``MongoDepots``.
 
 
 Code Examples

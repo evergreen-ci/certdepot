@@ -113,7 +113,7 @@ Note that in order for tests to run successfully and local mongod must be
 running.
 
 File tickets in Jira with the 
-`<MAKE project https://jira.mongodb.org/browse/MAKE>`_.
+`MAKE project <https://jira.mongodb.org/browse/MAKE>`_.
 
 
 Documentation

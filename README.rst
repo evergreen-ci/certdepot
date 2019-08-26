@@ -84,11 +84,37 @@ functionality: ::
 	d, err := BootstrapDepot(ctx, bootstrapConf)
 
 
-Tests
------
 
-To run tests simply run `make test` from the root directory of the project. The
-tests require a local mongod to be running.
+Development
+-----------
+
+The certdepot project uses a ``makefile`` to coordinate testing.
+
+The makefile provides the following targets:
+
+``build``
+   Compiles non-test code.
+
+``test``
+   Runs all tests, sequentially, for all packages.
+
+``test-<package>``
+   Runs all tests for a specific package
+
+``race``, ``race-<package>``
+   As with their ``test`` counterpart, these targets run tests with
+   the race detector enabled.
+
+``lint``, ``lint-<package>``
+   Installs and runs the ``gometaliter`` with appropriate settings to
+   lint the project.
+
+Note that in order for tests to run successfully and local mongod must be
+running.
+
+File tickets in Jira with the 
+`<MAKE project https://jira.mongodb.org/browse/MAKE>`_.
+
 
 Documentation
 -------------

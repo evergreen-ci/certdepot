@@ -112,8 +112,8 @@ The makefile provides the following targets:
 Note that in order for tests to run successfully and local mongod must be
 running.
 
-File tickets in Jira with the 
-`MAKE project <https://jira.mongodb.org/browse/MAKE>`_.
+File tickets in Jira with the `MAKE <https://jira.mongodb.org/browse/MAKE>`_
+project.
 
 
 Documentation

@@ -21,17 +21,17 @@ Certificate Creation and Signing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SSL certificates and certificate authorities (CAs) can easily be created and
-signed using CertDepot. 
+signed using Certdepot. 
 
 
 MongoDB Backed Depot
 ~~~~~~~~~~~~~~~~~~~~
 
-Certdepot implements a CertStrap 
-`depot <https://godoc.org/github.com/square/certstrap/depot#Depot>`_. This
-facilitates the storing and fetching of SSL certifcates in a Mongo database.
-There are various functions for maintaining the cert store, such as checking
-for expiration and rotating certs.
+Certdepot implements a certstrap 
+`depot <https://godoc.org/github.com/square/certstrap/depot#Depot>`_ backed by
+MongoDB. This facilitates the storing and fetching of SSL certifcates to and
+from a Mongo database. There are various functions for maintaining the depot,
+such as checking for expiration and rotating certs.
 
 
 Bootstrap
@@ -93,8 +93,8 @@ tests require a local mongod to be running.
 Documentation
 -------------
 
-See the `<https://godoc.org/github.com/evergreen-ci/certdepot>`_ for complete
-documentation of certdepot.
+See the `certdepot <https://godoc.org/github.com/evergreen-ci/certdepot>`_ for
+complete documentation of certdepot.
 
 See the `certstrap godoc <https://godoc.org/github.com/square/certstrap>`_ for
 complete documentation of certstrap.

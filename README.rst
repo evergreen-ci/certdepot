@@ -99,7 +99,7 @@ The makefile provides the following targets:
    Runs all tests, sequentially, for all packages.
 
 ``test-<package>``
-   Runs all tests for a specific package
+   Runs all tests for a specific package.
 
 ``race``, ``race-<package>``
    As with their ``test`` counterpart, these targets run tests with

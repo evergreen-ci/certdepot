@@ -66,7 +66,7 @@ type CertificateOptions struct {
 }
 
 // Init initializes a new CA.
-func (opts *CertificateOptions) Init(wd Depot) error {
+func (opts *CertificateOptions) Init(wd depot.Depot) error {
 	d := depot.Depot(wd)
 
 	if opts.CommonName == "" {
@@ -145,7 +145,7 @@ func (opts *CertificateOptions) Reset() {
 
 // CertRequest creates a new certificate signing request (CSR) and key and puts
 // them in the depot.
-func (opts *CertificateOptions) CertRequest(wd Depot) error {
+func (opts *CertificateOptions) CertRequest(wd depot.Depot) error {
 	if _, _, err := opts.CertRequestInMemory(); err != nil {
 		return errors.Wrap(err, "problem creating cert request and key")
 	}
@@ -241,7 +241,7 @@ func (opts *CertificateOptions) PutCertRequestFromMemory(wd depot.Depot) error {
 }
 
 // Sign signs a CSR with a given CA for a new certificate.
-func (opts *CertificateOptions) Sign(wd Depot) error {
+func (opts *CertificateOptions) Sign(wd depot.Depot) error {
 	_, err := opts.SignInMemory(wd)
 	if err != nil {
 		return errors.Wrap(err, "problem signing certificate request")
@@ -257,7 +257,7 @@ func (opts *CertificateOptions) signedInMemory() bool {
 // SignInMemory is the same as Sign but returns the resulting certificate
 // without putting it in the depot. Use PutCertFromMemory to put the certificate
 // in the depot.
-func (opts *CertificateOptions) SignInMemory(wd Depot) (*pkix.Certificate, error) {
+func (opts *CertificateOptions) SignInMemory(wd depot.Depot) (*pkix.Certificate, error) {
 	d := depot.Depot(wd)
 
 	if opts.signedInMemory() {
@@ -330,7 +330,7 @@ func (opts *CertificateOptions) SignInMemory(wd Depot) (*pkix.Certificate, error
 
 // PutCertFromMemory stores the certificate generated from the options in the
 // depot, along with the expiration TTL on the certificate.
-func (opts *CertificateOptions) PutCertFromMemory(wd Depot) error {
+func (opts *CertificateOptions) PutCertFromMemory(wd depot.Depot) error {
 	d := depot.Depot(wd)
 
 	if !opts.signedInMemory() {

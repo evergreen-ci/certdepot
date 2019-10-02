@@ -58,7 +58,6 @@ func NewCredentialsFromFile(path string) (*Credentials, error) {
 		return nil, errors.Wrap(err, "error reading credentials file")
 	}
 
-	// TODO
 	creds := Credentials{}
 	if err := json.Unmarshal(contents, &creds); err != nil {
 		return nil, errors.Wrap(err, "error unmarshalling contents of credentials file")

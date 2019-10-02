@@ -80,7 +80,7 @@ func depotGenerate(dpt Depot, name string, do DepotOptions) (*Credentials, error
 
 	creds, err := NewCredentials(pemCACrt, pemCrt, pemKey)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not create RPC credentials")
+		return nil, errors.Wrap(err, "could not create credentials")
 	}
 	creds.ServerName = name
 
@@ -105,7 +105,7 @@ func depotFind(dpt depot.Depot, name string, do DepotOptions) (*Credentials, err
 
 	creds, err := NewCredentials(caCrt, crt, key)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not create RPC credentials")
+		return nil, errors.Wrap(err, "could not create credentials")
 	}
 	creds.ServerName = name
 

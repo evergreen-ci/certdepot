@@ -20,6 +20,9 @@ func NewFileDepot(dir string) (Depot, error) {
 	return &fileDepot{FileDepot: dt}, nil
 }
 
+// MakeFileDepot constructs a file-based depot implementation and
+// allows users to specify options for the default CA name and
+// expiration time.
 func MakeFileDepot(dir string, opts DepotOptions) (Depot, error) {
 	dt, err := NewFileDepot(dir)
 	if err != nil {

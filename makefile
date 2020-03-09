@@ -19,44 +19,16 @@ gocache := $(shell cygpath -m $(gocache))
 endif
 goEnv := GOPATH=$(gopath) GOCACHE=$(gocache)$(if $(GO_BIN_PATH), PATH="$(shell dirname $(GO_BIN_PATH)):$(PATH)")
 
-# start linting configuration
-#   package, testing, and linter dependencies specified
-#   separately. This is a temporary solution: eventually we should
-#   vendorize all of these dependencies.
-lintDeps := github.com/alecthomas/gometalinter
-#   include test files and give linters 40s to run to avoid timeouts
-lintArgs := --tests --deadline=13m --vendor
-#   gotype produces false positives because it reads .a files which
-#   are rarely up to date.
-lintArgs += --disable="gotype" --disable="gosec" --disable="gocyclo" --enable="golint"
-lintArgs += --skip="build"
-#   enable and configure additional linters
-lintArgs += --line-length=100 --dupl-threshold=150
-#   some test cases are structurally similar, and lead to dupl linter
-#   warnings, but are important to maintain separately, and would be
-#   difficult to test without a much more complex reflection/code
-#   generation approach, so we ignore dupl errors in tests.
-lintArgs += --exclude="warning: duplicate of .*_test.go"
-#   go lint warns on an error in docstring format, erroneously because
-#   it doesn't consider the entire package.
-lintArgs += --exclude="warning: package comment should be of the form \"Package .* ...\""
-#   known issues that the linter picks up that are not relevant in our cases
-lintArgs += --exclude="file is not goimported" # top-level mains aren't imported
-lintArgs += --exclude="error return value not checked .defer.*"
-# end linting configuration
 
-
-# start dependency installation tools
-#   implementation details for being able to lazily install dependencies
-lintDeps := $(addprefix $(gopath)/src/,$(lintDeps))
-$(gopath)/src/%:
-	@-[ ! -d $(gopath) ] && mkdir -p $(gopath) || true
-	$(goEnv) $(gobin) get $(subst $(gopath)/src/,,$@)
-$(buildDir)/run-linter:cmd/run-linter/run-linter.go $(buildDir)/.lintSetup
-	 $(goEnv) $(gobin) build -o $@ $<
-$(buildDir)/.lintSetup:$(lintDeps) $(buildDir)
-	@-$(goEnv) $(gopath)/bin/gometalinter --install >/dev/null && touch $@
-# end dependency installation tools
+# start lint setup targets
+lintDeps := $(buildDir)/.lintSetup $(buildDir)/run-linter $(buildDir)/golangci-lint
+$(buildDir)/.lintSetup:$(buildDir)/golangci-lint
+	@touch $@
+$(buildDir)/golangci-lint:$(buildDir)
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/76a82c6ed19784036bbf2d4c84d0228ca12381a4/install.sh | sh -s -- -b $(buildDir) v1.23.8 >/dev/null 2>&1
+$(buildDir)/run-linter:cmd/run-linter/run-linter.go $(buildDir)/.lintSetup $(buildDir)
+	@$(goEnv) $(gobin) build -o $@ $<
+# end lint setup targets
 
 
 testArgs := -v
@@ -91,9 +63,9 @@ $(buildDir)/output.%.coverage.html:$(buildDir)/output.%.coverage
 	$(goEnv) $(gobin) tool cover -html=$< -o $@
 #  targets to generate gotest output from the linter.
 $(buildDir)/output.%.lint:$(buildDir)/run-linter $(buildDir)/ .FORCE
-	$(goEnv) ./$< --output=$@ --lintArgs='$(lintArgs)' --packages='$*'
+	$(goEnv) ./$< --output=$@ --lintBin=$(buildDir)/golangci-lint --packages='$*'
 $(buildDir)/output.lint:$(buildDir)/run-linter $(buildDir)/ .FORCE
-	$(goEnv) ./$< --output="$@" --lintArgs='$(lintArgs)' --packages="$(packages)"
+	$(goEnv) ./$< --output=$@ --lintBin=$(buildDir)/golangci-lint --packages='$(packages)'
 #  targets to process and generate coverage reports
 # end test and coverage artifacts
 
@@ -136,6 +108,9 @@ vendor-clean:
 	find vendor/ -type d -empty | xargs rm -rf
 	find vendor/ -name "*.gif" -o -name "*.gz" -o -name "*.png" -o -name "*.ico" -o -name "*testdata*" | xargs rm -rf
 phony += vendor-clean
+clean:
+	rm -rf $(lintDeps)
+phony += clean
 
 # mongodb utility targets
 mongodb/.get-mongodb:

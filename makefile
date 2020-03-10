@@ -1,8 +1,7 @@
 buildDir := build
-srcFiles := $(shell find . -name "*.go" -not -path "./$(buildDir)/*" -not -name "*_test.go" -not -path "*\#*")
-testFiles := $(shell find . -name "*.go" -not -path "./$(buildDir)/*" -not -path "*\#*")
-
+name := certdepot
 packages := certdepot
+projectPath := github.com/evergreen-ci/certdepot
 #
 # override the go binary path if set
 gobin := $(GO_BIN_PATH)
@@ -49,7 +48,7 @@ testArgs += -race
 endif
 # test execution and output handlers
 $(buildDir)/:
-	mkdir -p $@
+	@mkdir -p $@
 $(buildDir)/output.%.test:$(buildDir)/ .FORCE
 	$(goEnv) $(gobin) test $(testArgs) ./$(if $(subst $(name),,$*),$*,) | tee $@
 	@! grep -s -q -e "^FAIL" $@ && ! grep -s -q "^WARNING: DATA RACE" $@
@@ -59,12 +58,16 @@ $(buildDir)/output.test:$(buildDir)/ .FORCE
 $(buildDir)/output.%.coverage:$(buildDir)/ .FORCE
 	$(goEnv) $(gobin) test $(testArgs) ./$(if $(subst $(name),,$*),$*,) -covermode=count -coverprofile $@ | tee $(buildDir)/output.$*.test
 	@-[ -f $@ ] && $(gobin) tool cover -func=$@ | sed 's%$(projectPath)/%%' | column -t
+$(buildDir)/output.coverage:$(buildDir)/ .FORCE
+	$(goEnv) $(gobin) test $(testArgs) -covermode=count -coverprofile $@ ./... | tee $(buildDir)/output.$*.test
 $(buildDir)/output.%.coverage.html:$(buildDir)/output.%.coverage
 	$(goEnv) $(gobin) tool cover -html=$< -o $@
+$(buildDir)/output.coverage.html: $(buildDir)/output.coverage .FORCE
+	$(goEnv) $(gobin) tool cover -html=$< -o $@
 #  targets to generate gotest output from the linter.
-$(buildDir)/output.%.lint:$(buildDir)/run-linter $(buildDir)/ .FORCE
+$(buildDir)/output.%.lint:$(buildDir)/run-linter $(buildDir) .FORCE
 	$(goEnv) ./$< --output=$@ --lintBin=$(buildDir)/golangci-lint --packages='$*'
-$(buildDir)/output.lint:$(buildDir)/run-linter $(buildDir)/ .FORCE
+$(buildDir)/output.lint:$(buildDir)/run-linter $(buildDir) .FORCE
 	$(goEnv) ./$< --output=$@ --lintBin=$(buildDir)/golangci-lint --packages='$(packages)'
 #  targets to process and generate coverage reports
 # end test and coverage artifacts
@@ -72,32 +75,24 @@ $(buildDir)/output.lint:$(buildDir)/run-linter $(buildDir)/ .FORCE
 
 # userfacing targets for basic build and development operations
 compile:
-	$(goEnv) $(gobin) build ./
-test:$(buildDir)/test.out
-$(buildDir)/test.out:.FORCE
-	@mkdir -p $(buildDir)
-	$(goEnv) $(gobin) test $(testArgs) ./ | tee $@
-	@grep -s -q -e "^PASS" $@
-coverage:$(buildDir)/cover.out
-	$(goEnv) $(gobin) tool cover -func=$< | sed -E 's%github.com/.*/ftdc/%%' | column -t
-coverage-html:$(buildDir)/cover.html
+	$(goEnv) $(gobin) build ./...
+test:$(buildDir)/output.test
+coverage:$(buildDir)/output.coverage
+	$(goEnv) $(gobin) tool cover -func=$< | sed -E 's%github.com/.*/certdepot/%%' | column -t
+coverage-html:$(buildDir)/output.coverage.html
 
 benchmark:
 	$(goEnv) $(gobin) test -v -benchmem -bench=. -run="Benchmark.*" -timeout=20m
 lint:$(foreach target,$(packages),$(buildDir)/output.$(target).lint)
 
-phony += lint lint-deps build build-race race test coverage coverage-html
+phony += lint build race test coverage coverage-html
 .PRECIOUS:$(foreach target,$(packages),$(buildDir)/output.$(target).lint)
 .PRECIOUS:$(buildDir)/output.lint
 # end front-ends
 
 
-$(buildDir):$(srcFiles) compile
+$(buildDir): compile
 	@mkdir -p $@
-$(buildDir)/cover.out:$(buildDir) $(testFiles) .FORCE
-	$(goEnv) $(gobin) test $(testArgs) -covermode=count -coverprofile $@ ./
-$(buildDir)/cover.html:$(buildDir)/cover.out
-	$(goEnv) $(gobin) tool cover -html=$< -o $@
 
 
 vendor-clean:

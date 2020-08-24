@@ -146,7 +146,19 @@ buildvariants:
       - archlinux-test
     tasks:
       - name: ".test"
+
+  - name: lint
+    display name: Lint (Arch Linux)
+    expansions:
+      DISABLE_COVERAGE: true
+      GO_BIN_PATH: /opt/golang/go1.13/bin/go
+      GOROOT: /opt/golang/go1.13
+    run_on:
+      - archlinux-test
+      - archlinux-build
+    tasks:
       - name: ".report"
+
 
   - name: ubuntu1604
     display_name: Ubuntu 16.04

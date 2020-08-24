@@ -130,10 +130,6 @@ tasks:
     tags: ["test"]
     name: test
 
-  - <<: *run-build-with-mongodb
-    tags: ["race"]
-    name: test
-
 #######################################
 #           Buildvariants             #
 #######################################
@@ -149,7 +145,7 @@ buildvariants:
     run_on:
       - archlinux-test
     tasks:
-      - name: ".race"
+      - name: ".test"
       - name: ".report"
 
   - name: ubuntu1604

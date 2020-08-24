@@ -1,6 +1,6 @@
 buildDir := build
 name := certdepot
-packages := certdepot
+packages := $(name)
 projectPath := github.com/evergreen-ci/certdepot
 
 # start environment setup
@@ -36,10 +36,10 @@ $(buildDir)/run-linter:cmd/run-linter/run-linter.go $(buildDir)/golangci-lint
 # end lint setup targets
 
 
-testOutput := $(foreach target,$(testPackages),$(buildDir)/output.$(target).test)
-lintOutput := $(foreach target,$(lintPackages),$(buildDir)/output.$(target).lint)
-coverageOutput := $(foreach target,$(testPackages),$(buildDir)/output.$(target).coverage)
-coverageHtmlOutput := $(foreach target,$(testPackages),$(buildDir)/output.$(target).coverage.html)
+testOutput := $(foreach target,$(packages),$(buildDir)/output.$(target).test)
+lintOutput := $(foreach target,$(packages),$(buildDir)/output.$(target).lint)
+coverageOutput := $(foreach target,$(packages),$(buildDir)/output.$(target).coverage)
+coverageHtmlOutput := $(foreach target,$(packages),$(buildDir)/output.$(target).coverage.html)
 
 
 testArgs := -v
@@ -80,7 +80,7 @@ $(buildDir)/output.%.lint:$(buildDir)/run-linter .FORCE
 # userfacing targets for basic build and development operations
 test:$(testOutput)
 coverage:$(coverageOutput)
-	$(gobin) tool cover -func=$< | sed -E 's%github.com/.*/certdepot/%%' | column -t
+
 coverage-html:$(coverageHtmlOutput)
 	$(gobin) tool cover -html=$< -o $@
 benchmark:

@@ -84,7 +84,7 @@ post:
     params:
       aws_key: ${aws_key}
       aws_secret: ${aws_secret}
-      local_files_include_filter: ["gopath/src/github.com/evergreen-ci/certdepot/build/cover.html"]
+      local_files_include_filter: ["gopath/src/github.com/evergreen-ci/certdepot/build/output.*.coverage.html"]
       remote_file: certdepot/${task_id}/
       bucket: mciuploads
       content_type: text/html
@@ -95,7 +95,7 @@ post:
     params:
       aws_key: ${aws_key}
       aws_secret: ${aws_secret}
-      local_files_include_filter: ["gopath/src/github.com/evergreen-ci/certdepot/build/cover.out"]
+      local_files_include_filter: ["gopath/src/github.com/evergreen-ci/certdepot/build/output.*.coverage"]
       remote_file: certdepot/${task_id}/
       bucket: mciuploads
       content_type: text/plain
@@ -153,6 +153,7 @@ buildvariants:
       DISABLE_COVERAGE: true
       GO_BIN_PATH: /opt/golang/go1.13/bin/go
       GOROOT: /opt/golang/go1.13
+      mongodb_url: http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-4.0.1.tgz
     run_on:
       - archlinux-test
       - archlinux-build

@@ -103,7 +103,7 @@ phony += vendor-clean
 clean:
 	rm -rf $(lintDeps)
 clean-results:
-	rm -rf output.*
+	rm -rf $(buildDir)/output.*
 phony += clean
 
 # mongodb utility targets

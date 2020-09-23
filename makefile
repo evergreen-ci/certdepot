@@ -82,7 +82,6 @@ test:$(testOutput)
 coverage:$(coverageOutput)
 
 coverage-html:$(coverageHtmlOutput)
-	$(gobin) tool cover -html=$< -o $@
 benchmark:
 	$(gobin) test -v -benchmem -bench=. -run="Benchmark.*" -timeout=20m
 lint:$(lintOutput)

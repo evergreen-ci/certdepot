@@ -73,7 +73,8 @@ func TestDepot(t *testing.T) {
 			setup: func() Depot {
 				tempDir, err = ioutil.TempDir(".", "file_depot")
 				require.NoError(t, err)
-				d, err := NewFileDepot(tempDir)
+				var d Depot
+				d, err = NewFileDepot(tempDir)
 				require.NoError(t, err)
 				return d
 			},
@@ -92,11 +93,12 @@ func TestDepot(t *testing.T) {
 						CA:         "root",
 					},
 				}
-				_, err := BootstrapDepot(ctx, conf)
+				_, err = BootstrapDepot(ctx, conf)
 				require.NoError(t, err)
 				// We have to do this because the bootstrapped file depot
 				// bootstrapped does not include any DepotOptions.
-				d, err := MakeFileDepot(tempDir, DepotOptions{
+				var d Depot
+				d, err = MakeFileDepot(tempDir, DepotOptions{
 					CA:                "root",
 					DefaultExpiration: time.Minute,
 				})
@@ -183,7 +185,8 @@ func TestDepot(t *testing.T) {
 						CA:         "root",
 					},
 				}
-				d, err := BootstrapDepot(ctx, conf)
+				var d Depot
+				d, err = BootstrapDepot(ctx, conf)
 				require.NoError(t, err)
 				return d
 			},
@@ -358,7 +361,8 @@ func TestDepot(t *testing.T) {
 						Expires:    time.Minute,
 					},
 				}
-				d, err := BootstrapDepot(ctx, conf)
+				var d Depot
+				d, err = BootstrapDepot(ctx, conf)
 				require.NoError(t, err)
 				return d
 			},

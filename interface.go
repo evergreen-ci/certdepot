@@ -13,6 +13,8 @@ type Depot interface {
 	Save(string, *Credentials) error
 	Find(string) (*Credentials, error)
 	Generate(string) (*Credentials, error)
+	// kim: TODO: test and validate in staging
+	GenerateWithOptions(CertificateOptions) (*Credentials, error)
 }
 
 // DepotOptions capture default options used during certificate

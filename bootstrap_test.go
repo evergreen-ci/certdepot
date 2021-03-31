@@ -195,7 +195,7 @@ func TestBootstrapDepot(t *testing.T) {
 	defer cancel()
 	client, err := mongo.Connect(connctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	require.NoError(t, err)
-	tempDepot, err := depot.NewFileDepot("temp_depot")
+	tempDepot, err := NewFileDepot("temp_depot")
 	require.NoError(t, err)
 	defer func() {
 		assert.NoError(t, os.RemoveAll(depotName))
@@ -215,20 +215,20 @@ func TestBootstrapDepot(t *testing.T) {
 
 	for _, impl := range []struct {
 		name          string
-		setup         func(*BootstrapDepotConfig) depot.Depot
-		bootstrapFunc func(BootstrapDepotConfig) (depot.Depot, error)
+		setup         func(*BootstrapDepotConfig) Depot
+		bootstrapFunc func(BootstrapDepotConfig) (Depot, error)
 		tearDown      func()
 	}{
 		{
 			name: "FileDepot",
-			setup: func(conf *BootstrapDepotConfig) depot.Depot {
+			setup: func(conf *BootstrapDepotConfig) Depot {
 				conf.FileDepot = depotName
 
-				d, err := depot.NewFileDepot(depotName)
+				d, err := NewFileDepot(depotName)
 				require.NoError(t, err)
 				return d
 			},
-			bootstrapFunc: func(conf BootstrapDepotConfig) (depot.Depot, error) {
+			bootstrapFunc: func(conf BootstrapDepotConfig) (Depot, error) {
 				return BootstrapDepot(ctx, conf)
 			},
 			tearDown: func() {
@@ -237,7 +237,7 @@ func TestBootstrapDepot(t *testing.T) {
 		},
 		{
 			name: "MongoDepot",
-			setup: func(conf *BootstrapDepotConfig) depot.Depot {
+			setup: func(conf *BootstrapDepotConfig) Depot {
 				conf.MongoDepot = &MongoDBOptions{
 					DatabaseName:   databaseName,
 					CollectionName: depotName,
@@ -247,7 +247,7 @@ func TestBootstrapDepot(t *testing.T) {
 				require.NoError(t, err)
 				return d
 			},
-			bootstrapFunc: func(conf BootstrapDepotConfig) (depot.Depot, error) {
+			bootstrapFunc: func(conf BootstrapDepotConfig) (Depot, error) {
 				return BootstrapDepot(ctx, conf)
 			},
 			tearDown: func() {
@@ -256,7 +256,7 @@ func TestBootstrapDepot(t *testing.T) {
 		},
 		{
 			name: "MongoDepotExistingClient",
-			setup: func(conf *BootstrapDepotConfig) depot.Depot {
+			setup: func(conf *BootstrapDepotConfig) Depot {
 				conf.MongoDepot = &MongoDBOptions{
 					DatabaseName:   databaseName,
 					CollectionName: depotName,
@@ -266,7 +266,7 @@ func TestBootstrapDepot(t *testing.T) {
 				require.NoError(t, err)
 				return d
 			},
-			bootstrapFunc: func(conf BootstrapDepotConfig) (depot.Depot, error) {
+			bootstrapFunc: func(conf BootstrapDepotConfig) (Depot, error) {
 				return BootstrapDepotWithMongoClient(ctx, client, conf)
 			},
 			tearDown: func() {
@@ -278,8 +278,8 @@ func TestBootstrapDepot(t *testing.T) {
 			for _, test := range []struct {
 				name   string
 				conf   BootstrapDepotConfig
-				setup  func(depot.Depot)
-				test   func(depot.Depot)
+				setup  func(Depot)
+				test   func(Depot)
 				hasErr bool
 			}{
 				{
@@ -288,13 +288,13 @@ func TestBootstrapDepot(t *testing.T) {
 						CAName:      caName,
 						ServiceName: serviceName,
 					},
-					setup: func(d depot.Depot) {
+					setup: func(d Depot) {
 						assert.NoError(t, d.Put(depot.CrtTag(caName), []byte("fake ca cert")))
 						assert.NoError(t, d.Put(depot.PrivKeyTag(caName), []byte("fake ca key")))
 						assert.NoError(t, d.Put(depot.CrtTag(serviceName), []byte("fake service cert")))
 						assert.NoError(t, d.Put(depot.PrivKeyTag(serviceName), []byte("fake service key")))
 					},
-					test: func(d depot.Depot) {
+					test: func(d Depot) {
 						data, err := d.Get(depot.CrtTag(caName))
 						assert.NoError(t, err)
 						assert.Equal(t, data, []byte("fake ca cert"))
@@ -323,7 +323,7 @@ func TestBootstrapDepot(t *testing.T) {
 							Expires:    time.Hour,
 						},
 					},
-					test: func(d depot.Depot) {
+					test: func(d Depot) {
 						data, err := d.Get(depot.CrtTag(caName))
 						assert.NoError(t, err)
 						assert.Equal(t, data, caCert)

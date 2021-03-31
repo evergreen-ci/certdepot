@@ -24,7 +24,7 @@ func TestInit(t *testing.T) {
 	defer func() {
 		assert.NoError(t, os.RemoveAll(tempDir))
 	}()
-	d, err := depot.NewFileDepot(tempDir)
+	d, err := NewFileDepot(tempDir)
 	require.NoError(t, err)
 
 	opts := &CertificateOptions{
@@ -176,7 +176,7 @@ func TestCertRequest(t *testing.T) {
 	defer func() {
 		assert.NoError(t, os.RemoveAll(tempDir))
 	}()
-	d, err := depot.NewFileDepot(tempDir)
+	d, err := NewFileDepot(tempDir)
 	require.NoError(t, err)
 
 	opts := &CertificateOptions{
@@ -360,8 +360,8 @@ func TestCertRequest(t *testing.T) {
 }
 
 func TestInMemory(t *testing.T) {
-	// Resets depot state
-	clearByName := func(d depot.Depot, name string) error {
+	// Resets depot state.
+	clearByName := func(d Depot, name string) error {
 		catcher := grip.NewBasicCatcher()
 		if csrTag := depot.CsrTag(name); d.Check(csrTag) {
 			catcher.Add(d.Delete(csrTag))
@@ -375,8 +375,8 @@ func TestInMemory(t *testing.T) {
 		return catcher.Resolve()
 	}
 
-	for testName, testCase := range map[string]func(t *testing.T, d depot.Depot, opts *CertificateOptions){
-		"CertRequestInMemory": func(t *testing.T, d depot.Depot, opts *CertificateOptions) {
+	for testName, testCase := range map[string]func(t *testing.T, d Depot, opts *CertificateOptions){
+		"CertRequestInMemory": func(t *testing.T, d Depot, opts *CertificateOptions) {
 			checkMatchingCSR := func(t *testing.T, opts *CertificateOptions, rawCSR *x509.CertificateRequest) {
 				assert.Equal(t, opts.CommonName, rawCSR.Subject.CommonName)
 				assert.Equal(t, []string{opts.Organization}, rawCSR.Subject.Organization)
@@ -466,7 +466,7 @@ func TestInMemory(t *testing.T) {
 				})
 			}
 		},
-		"PutCertRequest": func(t *testing.T, d depot.Depot, opts *CertificateOptions) {
+		"PutCertRequest": func(t *testing.T, d Depot, opts *CertificateOptions) {
 			for subTestName, subTestCase := range map[string]func(t *testing.T, name string){
 				"FailsWithoutCertRequestInMemory": func(t *testing.T, name string) {
 					assert.Error(t, opts.PutCertRequestFromMemory(d))
@@ -507,7 +507,7 @@ func TestInMemory(t *testing.T) {
 				})
 			}
 		},
-		"SignInMemory": func(t *testing.T, d depot.Depot, opts *CertificateOptions) {
+		"SignInMemory": func(t *testing.T, d Depot, opts *CertificateOptions) {
 			checkMatchingCert := func(t *testing.T, opts *CertificateOptions, rawCrt *x509.Certificate) {
 				assert.Equal(t, opts.CommonName, rawCrt.Subject.CommonName)
 				assert.Equal(t, []string{opts.Organization}, rawCrt.Subject.Organization)
@@ -593,7 +593,7 @@ func TestInMemory(t *testing.T) {
 				})
 			}
 		},
-		"PutCertFromMemory": func(t *testing.T, d depot.Depot, opts *CertificateOptions) {
+		"PutCertFromMemory": func(t *testing.T, d Depot, opts *CertificateOptions) {
 			for subTestName, subTestCase := range map[string]func(t *testing.T, name string){
 				"FailsWithoutSignInMemory": func(t *testing.T, name string) {
 					assert.Error(t, opts.PutCertFromMemory(d))
@@ -648,7 +648,7 @@ func TestInMemory(t *testing.T) {
 			defer func() {
 				assert.NoError(t, os.RemoveAll(tempDir))
 			}()
-			d, err := depot.NewFileDepot(tempDir)
+			d, err := NewFileDepot(tempDir)
 			require.NoError(t, err)
 
 			require.NoError(t, caOpts.Init(d))
@@ -679,7 +679,7 @@ func TestSign(t *testing.T) {
 	defer func() {
 		assert.NoError(t, os.RemoveAll(tempDir))
 	}()
-	d, err := depot.NewFileDepot(tempDir)
+	d, err := NewFileDepot(tempDir)
 	require.NoError(t, err)
 
 	caOpts := &CertificateOptions{

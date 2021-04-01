@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/square/certstrap/depot"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -208,9 +207,9 @@ func TestBootstrapDepot(t *testing.T) {
 		Expires:    time.Hour,
 	}
 	require.NoError(t, opts.Init(tempDepot))
-	caCert, err := tempDepot.Get(depot.CrtTag(caName))
+	caCert, err := tempDepot.Get(CrtTag(caName))
 	require.NoError(t, err)
-	caKey, err := tempDepot.Get(depot.PrivKeyTag(caName))
+	caKey, err := tempDepot.Get(PrivKeyTag(caName))
 	require.NoError(t, err)
 
 	for _, impl := range []struct {
@@ -289,22 +288,22 @@ func TestBootstrapDepot(t *testing.T) {
 						ServiceName: serviceName,
 					},
 					setup: func(d Depot) {
-						assert.NoError(t, d.Put(depot.CrtTag(caName), []byte("fake ca cert")))
-						assert.NoError(t, d.Put(depot.PrivKeyTag(caName), []byte("fake ca key")))
-						assert.NoError(t, d.Put(depot.CrtTag(serviceName), []byte("fake service cert")))
-						assert.NoError(t, d.Put(depot.PrivKeyTag(serviceName), []byte("fake service key")))
+						assert.NoError(t, d.Put(CrtTag(caName), []byte("fake ca cert")))
+						assert.NoError(t, d.Put(PrivKeyTag(caName), []byte("fake ca key")))
+						assert.NoError(t, d.Put(CrtTag(serviceName), []byte("fake service cert")))
+						assert.NoError(t, d.Put(PrivKeyTag(serviceName), []byte("fake service key")))
 					},
 					test: func(d Depot) {
-						data, err := d.Get(depot.CrtTag(caName))
+						data, err := d.Get(CrtTag(caName))
 						assert.NoError(t, err)
 						assert.Equal(t, data, []byte("fake ca cert"))
-						data, err = d.Get(depot.PrivKeyTag(caName))
+						data, err = d.Get(PrivKeyTag(caName))
 						assert.NoError(t, err)
 						assert.Equal(t, data, []byte("fake ca key"))
-						data, err = d.Get(depot.CrtTag(serviceName))
+						data, err = d.Get(CrtTag(serviceName))
 						assert.NoError(t, err)
 						assert.Equal(t, data, []byte("fake service cert"))
-						data, err = d.Get(depot.PrivKeyTag(serviceName))
+						data, err = d.Get(PrivKeyTag(serviceName))
 						assert.NoError(t, err)
 						assert.Equal(t, data, []byte("fake service key"))
 					},
@@ -324,10 +323,10 @@ func TestBootstrapDepot(t *testing.T) {
 						},
 					},
 					test: func(d Depot) {
-						data, err := d.Get(depot.CrtTag(caName))
+						data, err := d.Get(CrtTag(caName))
 						assert.NoError(t, err)
 						assert.Equal(t, data, caCert)
-						data, err = d.Get(depot.PrivKeyTag(caName))
+						data, err = d.Get(PrivKeyTag(caName))
 						assert.NoError(t, err)
 						assert.Equal(t, data, caKey)
 					},
@@ -388,10 +387,10 @@ func TestBootstrapDepot(t *testing.T) {
 					} else {
 						require.NoError(t, err)
 
-						assert.True(t, bd.Check(depot.CrtTag(caName)))
-						assert.True(t, bd.Check(depot.PrivKeyTag(caName)))
-						assert.True(t, bd.Check(depot.CrtTag(serviceName)))
-						assert.True(t, bd.Check(depot.PrivKeyTag(serviceName)))
+						assert.True(t, bd.Check(CrtTag(caName)))
+						assert.True(t, bd.Check(PrivKeyTag(caName)))
+						assert.True(t, bd.Check(CrtTag(serviceName)))
+						assert.True(t, bd.Check(PrivKeyTag(serviceName)))
 					}
 
 					if test.test != nil {

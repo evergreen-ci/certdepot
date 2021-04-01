@@ -113,7 +113,7 @@ func (m *mgoCertDepot) Check(tag *depot.Tag) bool {
 func (m *mgoCertDepot) CheckWithError(tag *depot.Tag) (bool, error) {
 	name, key, err := getNameAndKey(tag)
 	if err != nil {
-		return false, nil
+		return false, errors.Wrap(err, "getting name and key")
 	}
 	session := m.session.Clone()
 	defer session.Close()

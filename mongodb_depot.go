@@ -129,7 +129,7 @@ func (m *mongoDepot) Check(tag *depot.Tag) bool {
 func (m *mongoDepot) CheckWithError(tag *depot.Tag) (bool, error) {
 	name, key, err := getNameAndKey(tag)
 	if err != nil {
-		return false, nil
+		return false, errors.Wrap(err, "getting name and key")
 	}
 
 	u := &User{}

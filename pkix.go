@@ -28,23 +28,22 @@ func CrlTag(prefix string) *depot.Tag {
 	return depot.CrlTag(prefix)
 }
 
-// GetNameFromCrtTag returns the host name from a certificate tag.
+// GetNameFromCrtTag returns the name from a certificate tag.
 func GetNameFromCrtTag(tag *depot.Tag) string {
 	return depot.GetNameFromCrtTag(tag)
 }
 
-// GetNameFromPrivKeyTag returns the host name from a private key tag.
+// GetNameFromPrivKeyTag returns the name from a private key tag.
 func GetNameFromPrivKeyTag(tag *depot.Tag) string {
 	return depot.GetNameFromPrivKeyTag(tag)
 }
 
-// GetNameFromCsrTag returns the host name from a certificate request tag.
+// GetNameFromCsrTag returns the name from a certificate request tag.
 func GetNameFromCsrTag(tag *depot.Tag) string {
 	return depot.GetNameFromCsrTag(tag)
 }
 
-// GetNameFromCrlTag returns the host name from a certificate revocation list
-// tag.
+// GetNameFromCrlTag returns the name from a certificate revocation list tag.
 func GetNameFromCrlTag(tag *depot.Tag) string {
 	return depot.GetNameFromCrlTag(tag)
 }
@@ -84,27 +83,27 @@ func PutCertificateSigningRequest(d Depot, name string, csr *pkix.CertificateSig
 }
 
 // CheckCertificateSigningRequest checks the depot for existence of a
-// certificate signing request for a given host name.
+// certificate signing request for a given name.
 func CheckCertificateSigningRequest(d Depot, name string) bool {
 	return depot.CheckCertificateSigningRequest(d, name)
 }
 
 // CheckCertificateSigningRequestWithError checks the depot for existence of a
-// certificate signing request for a given host name. In the event of an
-// internal error, an error is returned.
+// certificate signing request for a given name. In the event of an internal
+// error, an error is returned.
 func CheckCertificateSigningRequestWithError(d Depot, name string) (bool, error) {
 	exists, err := d.CheckWithError(CsrTag(name))
 	return exists, errors.Wrap(err, "checking certificate signing request")
 }
 
 // GetCertificateSigningRequest retrieves a certificate signing request for a
-// given host name from the depot.
+// given name from the depot.
 func GetCertificateSigningRequest(d Depot, name string) (crt *pkix.CertificateSigningRequest, err error) {
 	return depot.GetCertificateSigningRequest(d, name)
 }
 
 // DeleteCertificateSigningRequest removes a certificate signing request for a
-// given host name from the depot.
+// given name from the depot.
 func DeleteCertificateSigningRequest(d Depot, name string) error {
 	return depot.DeleteCertificateSigningRequest(d, name)
 }
@@ -132,8 +131,8 @@ func GetPrivateKey(d Depot, name string) (key *pkix.Key, err error) {
 	return depot.GetPrivateKey(d, name)
 }
 
-// DeletePrivateKey removes a private key for a given host name from the depot.
-// This works for both encrypted and unencrypted private keys.
+// DeletePrivateKey removes a private key for a given name from the depot. This
+// works for both encrypted and unencrypted private keys.
 func DeletePrivateKey(d Depot, name string) error {
 	return d.Delete(depot.PrivKeyTag(name))
 }

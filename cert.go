@@ -459,11 +459,14 @@ func (opts *CertificateOptions) CreateCertificate(wd Depot) error {
 // either condition is met. True is returned if a certificate is created,
 // false otherwise. If the certificate is a CA, the behavior is undefined.
 func (opts *CertificateOptions) CreateCertificateOnExpiration(wd Depot, after time.Duration) (bool, error) {
+	var (
+		exists  bool
+		created bool
+		err     error
+	)
 	dne := true
-	var created bool
-	var err error
 
-	if exists, err := CheckCertificateWithError(wd, opts.CommonName); err != nil {
+	if exists, err = CheckCertificateWithError(wd, opts.CommonName); err != nil {
 		return created, err
 	} else if exists {
 		dne, err = DeleteOnExpiration(wd, opts.CommonName, after)

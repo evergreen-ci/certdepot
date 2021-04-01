@@ -234,7 +234,7 @@ func (opts *CertificateOptions) PutCertRequestFromMemory(wd Depot) error {
 		return err
 	}
 	if csrExists || privKeyExists {
-		return errors.New("certificate request has existed")
+		return errors.New("certificate request or private key already exists")
 	}
 
 	if err = depot.PutCertificateSigningRequest(wd, formattedName, opts.csr); err != nil {
@@ -353,7 +353,7 @@ func (opts *CertificateOptions) PutCertFromMemory(wd Depot) error {
 		return err
 	}
 	if exists {
-		return errors.New("certificate has existed")
+		return errors.New("certificate already exists")
 	}
 
 	if err := depot.PutCertificate(wd, formattedReqName, opts.crt); err != nil {

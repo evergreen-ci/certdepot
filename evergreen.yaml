@@ -103,11 +103,9 @@ post:
       display_name: "(txt) coverage:"
 
 tasks:
-  # the build (with and without the race detector) and lint tasks use
-  # a template that does not include test result parsing.
   - <<: *run-build
     tags: ["report"]
-    name: lint
+    name: lint-certdepot
 
   - <<: *run-build-with-mongodb
     tags: [ "report" ]

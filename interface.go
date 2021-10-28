@@ -6,8 +6,7 @@ import (
 	"github.com/square/certstrap/depot"
 )
 
-// Depot is a superset wrapper around certrstap's depot.Depot interface so
-// users only need to vendor certdepot.
+// Depot is a superset wrapper around certrstap's depot.Depot interface.
 type Depot interface {
 	depot.Depot
 	CheckWithError(tag *depot.Tag) (bool, error)

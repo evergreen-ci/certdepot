@@ -157,8 +157,8 @@ clean:
 	rm -rf $(buildDir)
 clean-results:
 	rm -rf $(buildDir)/output.*
-# end cleanup targets
 phony += clean clean-results
+# end cleanup targets
 
 # configure phony targets
 .FORCE:

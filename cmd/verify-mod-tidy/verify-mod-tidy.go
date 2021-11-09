@@ -60,6 +60,7 @@ func main() {
 	}
 }
 
+// readModuleFiles reads the contents of the go module files.
 func readModuleFiles() (goMod []byte, goSum []byte, err error) {
 	goMod, err = os.ReadFile(goModFile)
 	if err != nil {
@@ -72,6 +73,7 @@ func readModuleFiles() (goMod []byte, goSum []byte, err error) {
 	return goMod, goSum, nil
 }
 
+// writeModuleFiles writes the contents of the go module files.
 func writeModuleFiles(goMod, goSum []byte) {
 	if err := os.WriteFile(goModFile, goMod, 0600); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -81,6 +83,7 @@ func writeModuleFiles(goMod, goSum []byte) {
 	}
 }
 
+// runModTidy runs the `go mod tidy` command with the given go binary.
 func runModTidy(ctx context.Context, goBin string) error {
 	cmd := exec.CommandContext(ctx, goBin, "mod", "tidy")
 	cmd.Stdout = os.Stdout

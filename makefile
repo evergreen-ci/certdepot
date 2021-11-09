@@ -149,6 +149,9 @@ check-mongod: mongodb/.get-mongodb
 # start module management targets
 mod-tidy:
 	$(gobin) mod tidy
+# Check if go.mod and go.sum are clean. If they're clean, then mod tidy should not produce a different result.
+verify-mod-tidy:
+	$(gobin) run cmd/verify-mod-tidy/verify-mod-tidy.go -goBin="$(gobin)"
 phony += mod-tidy
 # end module management targets
 

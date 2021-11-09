@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -34,44 +36,54 @@ func main() {
 		defer cancel()
 	}
 
-	oldGoMod, err := os.ReadFile(goModFile)
+	oldGoMod, oldGoSum, err := readModuleFiles()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "reading file %s: %s\n", goModFile, err)
-		os.Exit(1)
-	}
-	oldGoSum, err := os.ReadFile(goSumFile)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "reading file %s: %s\n", goSumFile, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	cmd := exec.CommandContext(ctx, goBin, "mod", "tidy")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "mod tidy: %s\n", err)
+	if err := runModTidy(ctx, goBin); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	newGoMod, err := os.ReadFile(goModFile)
+	newGoMod, newGoSum, err := readModuleFiles()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "reading file %s: %s\n", goModFile, err)
-		os.Exit(1)
-	}
-	newGoSum, err := os.ReadFile(goSumFile)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "reading file %s: %s\n", goSumFile, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	if !bytes.Equal(oldGoMod, newGoMod) || !bytes.Equal(oldGoSum, newGoSum) {
 		fmt.Fprintf(os.Stderr, "%s and/or %s are not tidy - please run `go mod tidy`.\n", goModFile, goSumFile)
-		if err := os.WriteFile(goModFile, oldGoMod, 0600); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
-		if err := os.WriteFile(goSumFile, oldGoSum, 0600); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
+		writeModuleFiles(oldGoMod, oldGoSum)
 		os.Exit(1)
 	}
+}
+
+func readModuleFiles() (goMod []byte, goSum []byte, err error) {
+	goMod, err = os.ReadFile(goModFile)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "reading file '%s'", goModFile)
+	}
+	goSum, err = os.ReadFile(goSumFile)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "reading file '%s'", goSumFile)
+	}
+	return goMod, goSum, nil
+}
+
+func writeModuleFiles(goMod, goSum []byte) {
+	if err := os.WriteFile(goModFile, goMod, 0600); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	if err := os.WriteFile(goSumFile, goSum, 0600); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+}
+
+func runModTidy(ctx context.Context, goBin string) error {
+	cmd := exec.CommandContext(ctx, goBin, "mod", "tidy")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return errors.Wrap(cmd.Run(), "mod tidy")
 }

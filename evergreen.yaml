@@ -107,6 +107,16 @@ tasks:
     tags: ["report"]
     name: lint-certdepot
 
+  - name: verify-mod-tidy
+    tags: ["report"]
+    commands:
+      - command: git.get_project
+        type: system
+        params:
+          directory: certdepot
+      - func: run-make
+        vars: { target: "${task_name}" }
+
   - <<: *run-build-with-mongodb
     tags: [ "report" ]
     name: coverage-html

@@ -48,7 +48,7 @@ functions:
       working_dir: certdepot
       binary: make
       args: ["${target}"]
-      include_expansions_in_env: ["DISABLE_COVERAGE", "GOROOT", "RACE_DETECTOR"]
+      include_expansions_in_env: ["GOROOT", "RACE_DETECTOR"]
   set-up-mongodb:
     - command: subprocess.exec
       type: setup
@@ -118,8 +118,8 @@ tasks:
         vars: { target: "${task_name}" }
 
   - <<: *run-build-with-mongodb
-    tags: [ "report" ]
-    name: coverage-html
+    tags: ["report"]
+    name: html-coverage
 
   - <<: *run-build-with-mongodb
     tags: ["test"]
@@ -132,7 +132,6 @@ buildvariants:
   - name: race-detector
     display_name: Race Detector (Arch Linux)
     expansions:
-      DISABLE_COVERAGE: true
       GOROOT: /opt/golang/go1.16
       RACE_DETECTOR: true
       mongodb_url: http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-4.0.1.tgz
@@ -145,7 +144,6 @@ buildvariants:
   - name: lint
     display_name: Lint (Arch Linux)
     expansions:
-      DISABLE_COVERAGE: true
       GOROOT: /opt/golang/go1.16
       mongodb_url: http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-4.0.1.tgz
     run_on:
@@ -157,7 +155,6 @@ buildvariants:
   - name: ubuntu
     display_name: Ubuntu 18.04
     expansions:
-      DISABLE_COVERAGE: true
       GOROOT: /opt/golang/go1.16
       mongodb_url: http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-4.0.1.tgz
     run_on:
@@ -168,7 +165,6 @@ buildvariants:
   - name: macos
     display_name: macOS 10.14
     expansions:
-      DISABLE_COVERAGE: true
       GOROOT: /opt/golang/go1.16
       mongodb_url: https://fastdl.mongodb.org/osx/mongodb-osx-ssl-x86_64-4.0.1.tgz
     run_on:
@@ -184,7 +180,6 @@ buildvariants:
       - windows-64-vs2017-small
       - windows-64-vs2017-large
     expansions:
-      DISABLE_COVERAGE: true
       GOROOT: C:/golang/go1.16
       mongodb_url: https://fastdl.mongodb.org/win32/mongodb-win32-x86_64-2008plus-ssl-4.0.1.zip
     tasks:

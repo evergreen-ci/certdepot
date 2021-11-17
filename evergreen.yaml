@@ -118,8 +118,8 @@ tasks:
         vars: { target: "${task_name}" }
 
   - <<: *run-build-with-mongodb
-    tags: [ "report" ]
-    name: coverage-html
+    tags: ["report"]
+    name: html-coverage
 
   - <<: *run-build-with-mongodb
     tags: ["test"]

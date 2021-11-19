@@ -10,15 +10,17 @@ variables:
     # runs a build operation. The task name in evergreen should
     # correspond to a make target for the build operation.
     name: test
+    must_have_test_results: true
     commands:
       - func: get-project-and-modules
       - func: run-make
         vars: { target: "${task_name}" }
 
   - &run-build-with-mongodb
-    # runs a make target above, but only on systems that have a
+    # runs a make target like run-build, but only on systems that have a
     # running mongod started for testing.
     name: test
+    must_have_test_results: true
     commands:
       - func: get-project-and-modules
       - func: set-up-mongodb

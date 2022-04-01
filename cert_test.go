@@ -157,7 +157,6 @@ func TestInit(t *testing.T) {
 				assert.Equal(t, []string{opts.Province}, rawCert.Subject.Province)
 				assert.Empty(t, rawCert.IPAddresses)
 				assert.Empty(t, rawCert.DNSNames)
-				//assert.Empty(t, rawCert.URIs)
 				assert.Equal(t, rawCert.Subject, rawCert.Issuer)
 				assert.True(t, rawCert.NotBefore.Before(time.Now()))
 				assert.True(t, rawCert.NotAfter.After(time.Now().Add(23*time.Hour)))
@@ -186,7 +185,6 @@ func TestCertRequest(t *testing.T) {
 		Province:           "Manhattan",
 		Expires:            24 * time.Hour,
 		IP:                 []string{"0.0.0.0", "1.1.1.1"},
-		//URI:                []string{"https://www.evergreen.mongodb.com", "https://www.cedar.mongodb.com"},
 
 		// irrelevant information should be ignored
 		Host:         "evergreen",
@@ -316,16 +314,6 @@ func TestCertRequest(t *testing.T) {
 			},
 			hasErr: true,
 		},
-		/*
-			{
-				name: "InvalidURIs",
-				changeOpts: func() {
-					opts.IP = nil
-					opts.URI = []string{"invalid"}
-				},
-				hasErr: true,
-			},
-		*/
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			opts.Reset()
@@ -349,7 +337,6 @@ func TestCertRequest(t *testing.T) {
 				assert.Equal(t, []string{opts.OrganizationalUnit}, rawCSR.Subject.OrganizationalUnit)
 				assert.Equal(t, []string{opts.Province}, rawCSR.Subject.Province)
 				assert.Equal(t, convertIPs(opts.IP), rawCSR.IPAddresses)
-				//assert.Equal(t, convertURIs(opts.URI), rawCSR.URIs)
 				assert.Equal(t, opts.Domain, rawCSR.DNSNames)
 
 				test.keyTest()
@@ -699,7 +686,6 @@ func TestSign(t *testing.T) {
 		Province:           "NYC",
 		Expires:            24 * time.Hour,
 		IP:                 []string{"0.0.0.0", "1.1.1.1"},
-		//URI:                []string{"https://www.evergreen.mongodb.com", "https://www.cedar.mongodb.com"},
 	}
 	crtOpts := &CertificateOptions{
 		CA:      "ca",
@@ -713,7 +699,6 @@ func TestSign(t *testing.T) {
 		OrganizationalUnit: "perf",
 		Province:           "Ontario",
 		IP:                 []string{"0.0.0.0", "1.1.1.1"},
-		//URI:                []string{"https://www.evergreen.mongodb.com", "https://www.cedar.mongodb.com"},
 	}
 	require.NoError(t, caOpts.Init(d))
 	require.NoError(t, csrOpts.CertRequest(d))
@@ -845,7 +830,6 @@ func TestSign(t *testing.T) {
 				assert.Equal(t, []string{csrOpts.OrganizationalUnit}, rawCert.Subject.OrganizationalUnit)
 				assert.Equal(t, []string{csrOpts.Province}, rawCert.Subject.Province)
 				assert.Equal(t, convertIPs(csrOpts.IP), rawCert.IPAddresses)
-				//assert.Equal(t, convertURIs(csrOpts.URI), rawCert.URIs)
 				assert.Equal(t, csrOpts.Domain, rawCert.DNSNames)
 				assert.True(t, rawCert.NotBefore.Before(time.Now()))
 				assert.True(t, rawCert.NotAfter.After(time.Now().Add(23*time.Hour)))
@@ -932,14 +916,3 @@ func convertIPs(ips []string) []net.IP {
 
 	return converted
 }
-
-/*
-func convertURIs(uris []string) []*url.URL {
-	converted := make([]*url.URL, len(uris))
-	for i, uri := range uris {
-		converted[i], _ = url.Parse(uri)
-	}
-
-	return converted
-}
-*/

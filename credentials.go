@@ -49,22 +49,22 @@ func NewCredentials(caCert, cert, key []byte) (*Credentials, error) {
 func NewCredentialsFromFile(path string) (*Credentials, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "error opening credentials file")
+		return nil, errors.Wrap(err, "opening credentials file")
 	}
 	defer file.Close()
 
 	contents, err := ioutil.ReadAll(file)
 	if err != nil {
-		return nil, errors.Wrap(err, "error reading credentials file")
+		return nil, errors.Wrap(err, "reading credentials file")
 	}
 
 	creds := Credentials{}
 	if err := json.Unmarshal(contents, &creds); err != nil {
-		return nil, errors.Wrap(err, "error unmarshalling contents of credentials file")
+		return nil, errors.Wrap(err, "unmarshalling JSON contents of credentials file")
 	}
 
 	if err := creds.Validate(); err != nil {
-		return nil, errors.Wrap(err, "read invalid credentials from file")
+		return nil, errors.Wrap(err, "invalid credentials from file")
 	}
 
 	return &creds, nil
@@ -94,7 +94,7 @@ func (c *Credentials) Resolve() (*tls.Config, error) {
 
 	cert, err := tls.X509KeyPair(c.Cert, c.Key)
 	if err != nil {
-		return nil, errors.Wrap(err, "problem loading key pair")
+		return nil, errors.Wrap(err, "loading key pair")
 	}
 
 	return &tls.Config{
@@ -118,7 +118,7 @@ func (c *Credentials) Export() ([]byte, error) {
 
 	b, err := json.Marshal(c)
 	if err != nil {
-		return nil, errors.Wrap(err, "error exporting credentials")
+		return nil, errors.Wrap(err, "exporting credentials")
 	}
 
 	return b, nil

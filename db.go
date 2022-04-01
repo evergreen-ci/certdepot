@@ -16,7 +16,7 @@ func (m *mongoDepot) PutTTL(name string, expiration time.Time) error {
 
 	minExpiration, maxExpiration, err := ValidityBounds(m, name)
 	if err != nil {
-		return errors.Wrap(err, "could not get certificate validity bounds")
+		return errors.Wrap(err, "getting certificate validity bounds")
 	}
 	if expiration.Before(minExpiration) || expiration.After(maxExpiration) {
 		return errors.Errorf("cannot set expiration to %s because it must be between %s and %s", expiration, minExpiration, maxExpiration)
@@ -27,10 +27,10 @@ func (m *mongoDepot) PutTTL(name string, expiration time.Time) error {
 		bson.M{userIDKey: formattedName},
 		bson.M{"$set": bson.M{userTTLKey: expiration}})
 	if err != nil {
-		return errors.Wrap(err, "problem updating TTL in the database")
+		return errors.Wrap(err, "updating TTL in the database")
 	}
 	if updateRes.ModifiedCount == 0 {
-		return errors.Errorf("update did not change TTL for user %s", name)
+		return errors.Errorf("update did not change TTL for user '%s'", name)
 	}
 	return nil
 }
@@ -41,7 +41,7 @@ func (m *mongoDepot) GetTTL(name string) (time.Time, error) {
 	if err := m.client.Database(m.databaseName).Collection(m.collectionName).FindOne(m.ctx,
 		bson.M{userIDKey: formattedName},
 	).Decode(&user); err != nil {
-		return time.Time{}, errors.Wrap(err, "could not get TTL from database")
+		return time.Time{}, errors.Wrap(err, "getting TTL from database")
 	}
 	return user.TTL, nil
 }
@@ -52,10 +52,10 @@ func (m *mongoDepot) FindExpiresBefore(cutoff time.Time) ([]User, error) {
 	res, err := m.client.Database(m.databaseName).Collection(m.collectionName).
 		Find(m.ctx, expiresBeforeQuery(cutoff))
 	if err != nil {
-		return nil, errors.Wrap(err, "problem finding expired users")
+		return nil, errors.Wrap(err, "finding expired users")
 	}
 	if err := res.All(m.ctx, &users); err != nil {
-		return nil, errors.Wrap(err, "problem decoding results")
+		return nil, errors.Wrap(err, "decoding results")
 	}
 
 	return users, nil
@@ -67,7 +67,7 @@ func (m *mongoDepot) DeleteExpiresBefore(cutoff time.Time) error {
 	_, err := m.client.Database(m.databaseName).Collection(m.collectionName).
 		DeleteMany(m.ctx, expiresBeforeQuery(cutoff))
 	if err != nil {
-		return errors.Wrap(err, "problem removing expired users")
+		return errors.Wrap(err, "removing expired users")
 	}
 	return nil
 }

@@ -29,7 +29,7 @@ func NewMongoDBCertDepot(ctx context.Context, opts *MongoDBOptions) (Depot, erro
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(opts.MongoDBURI).SetConnectTimeout(opts.MongoDBDialTimeout))
 	if err != nil {
-		return nil, errors.Wrap(err, "problem connecting to database")
+		return nil, errors.Wrap(err, "connecting to database")
 	}
 
 	return &mongoDepot{
@@ -69,7 +69,7 @@ func (m *mongoDepot) Put(tag *depot.Tag, data []byte) error {
 
 	name, key, err := getNameAndKey(tag)
 	if err != nil {
-		return errors.Wrapf(err, "could not format name %s", name)
+		return errors.Wrapf(err, "formatting name '%s'", name)
 	}
 
 	update := bson.M{"$set": bson.M{key: string(data)}}
@@ -79,7 +79,7 @@ func (m *mongoDepot) Put(tag *depot.Tag, data []byte) error {
 		update,
 		options.Update().SetUpsert(true))
 	if err != nil {
-		return errors.Wrap(err, "problem adding data to the database")
+		return errors.Wrap(err, "adding data to the database")
 	}
 	grip.Debug(message.Fields{
 		"db":       m.databaseName,
@@ -158,15 +158,15 @@ func (m *mongoDepot) CheckWithError(tag *depot.Tag) (bool, error) {
 func (m *mongoDepot) Get(tag *depot.Tag) ([]byte, error) {
 	name, key, err := getNameAndKey(tag)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not format name %s", name)
+		return nil, errors.Wrapf(err, "formatting name '%s'", name)
 	}
 
 	u := &User{}
 	if err = m.client.Database(m.databaseName).Collection(m.collectionName).FindOne(m.ctx, bson.D{{Key: userIDKey, Value: name}}).Decode(u); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errors.Wrapf(err, "could not find %s in the database", name)
+			return nil, errors.Wrapf(err, "name '%s' not found", name)
 		}
-		return nil, errors.Wrapf(err, "problem looking up %s in the database", name)
+		return nil, errors.Wrapf(err, "looking up '%s' in the database", name)
 	}
 
 	var data []byte
@@ -191,13 +191,13 @@ func (m *mongoDepot) Get(tag *depot.Tag) ([]byte, error) {
 func (m *mongoDepot) Delete(tag *depot.Tag) error {
 	name, key, err := getNameAndKey(tag)
 	if err != nil {
-		return errors.Wrapf(err, "could not format name %s", name)
+		return errors.Wrapf(err, "formatting name '%s'", name)
 	}
 
 	if _, err = m.client.Database(m.databaseName).Collection(m.collectionName).UpdateOne(m.ctx,
 		bson.D{{Key: userIDKey, Value: name}},
 		bson.M{"$unset": bson.M{key: ""}}); errNotNoDocuments(err) {
-		return errors.Wrapf(err, "problem deleting %s.%s from the database", name, key)
+		return errors.Wrapf(err, "deleting '%s.%s' from the database", name, key)
 	}
 
 	return nil

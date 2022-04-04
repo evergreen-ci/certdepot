@@ -166,7 +166,7 @@ func (m *mongoDepot) Get(tag *depot.Tag) ([]byte, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, errors.Wrapf(err, "name '%s' not found", name)
 		}
-		return nil, errors.Wrapf(err, "looking up '%s' in the database", name)
+		return nil, errors.Wrapf(err, "looking up name '%s' in the database", name)
 	}
 
 	var data []byte

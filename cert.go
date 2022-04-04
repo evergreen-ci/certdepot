@@ -173,12 +173,12 @@ func (opts *CertificateOptions) CertRequestInMemory() (*pkix.CertificateSigningR
 
 	ips, err := pkix.ParseAndValidateIPs(strings.Join(opts.IP, ","))
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "parsing and validating IPs: %s", opts.IP)
+		return nil, nil, errors.Wrapf(err, "parsing and validating IPs '%s'", opts.IP)
 	}
 
 	uris, err := pkix.ParseAndValidateURIs(strings.Join(opts.URI, ","))
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "parsing and validating URIs: %s", opts.URI)
+		return nil, nil, errors.Wrapf(err, "parsing and validating URIs '%s'", opts.URI)
 	}
 
 	name, err := opts.getCertificateRequestName()
@@ -409,7 +409,7 @@ func (opts CertificateOptions) getOrCreatePrivateKey() (*pkix.Key, error) {
 		}
 		key, err = pkix.NewKeyFromPrivateKeyPEM(keyBytes)
 		if err != nil {
-			return nil, errors.Wrapf(err, "getting key from PEM")
+			return nil, errors.Wrap(err, "getting key from PEM")
 		}
 	} else {
 		if opts.KeyBits == 0 {

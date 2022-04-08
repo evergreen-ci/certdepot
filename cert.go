@@ -101,39 +101,39 @@ func (opts *CertificateOptions) Init(wd Depot) error {
 		opts.CommonName,
 	)
 	if err != nil {
-		return errors.Wrap(err, "problem creating certificate authority")
+		return errors.Wrap(err, "creating certificate authority")
 	}
 
 	if err = depot.PutCertificate(wd, formattedName, crt); err != nil {
-		return errors.Wrap(err, "problem saving certificate authority")
+		return errors.Wrap(err, "saving certificate authority")
 	}
 
 	if opts.Passphrase != "" {
 		if err = depot.PutEncryptedPrivateKey(wd, formattedName, key, []byte(opts.Passphrase)); err != nil {
-			return errors.Wrap(err, "problem saving encrypted private key")
+			return errors.Wrap(err, "saving encrypted private key")
 		}
 	} else {
 		if err = depot.PutPrivateKey(wd, formattedName, key); err != nil {
-			return errors.Wrap(err, "problem saving private key")
+			return errors.Wrap(err, "saving private key")
 		}
 	}
 
 	// create an empty CRL, this is useful for Java apps which mandate a CRL
 	crl, err := pkix.CreateCertificateRevocationList(key, crt, expiresTime)
 	if err != nil {
-		return errors.Wrap(err, "problem creating certificate revocation list")
+		return errors.Wrap(err, "creating certificate revocation list")
 	}
 	if err = depot.PutCertificateRevocationList(wd, formattedName, crl); err != nil {
-		return errors.Wrap(err, "problem saving certificate revocation list")
+		return errors.Wrap(err, "saving certificate revocation list")
 	}
 
 	if md, ok := wd.(*mongoDepot); ok {
 		rawCrt, err := crt.GetRawCertificate()
 		if err != nil {
-			return errors.Wrap(err, "problem getting raw cert")
+			return errors.Wrap(err, "getting raw cert")
 		}
 		if err = md.PutTTL(formattedName, rawCrt.NotAfter); err != nil {
-			return errors.Wrap(err, "problem setting certificate TTL")
+			return errors.Wrap(err, "setting certificate TTL")
 		}
 	}
 	return nil
@@ -153,7 +153,7 @@ func (opts *CertificateOptions) Reset() {
 // them in the depot.
 func (opts *CertificateOptions) CertRequest(wd Depot) error {
 	if _, _, err := opts.CertRequestInMemory(); err != nil {
-		return errors.Wrap(err, "problem creating cert request and key")
+		return errors.Wrap(err, "creating cert request and key")
 	}
 
 	return opts.PutCertRequestFromMemory(wd)
@@ -173,12 +173,12 @@ func (opts *CertificateOptions) CertRequestInMemory() (*pkix.CertificateSigningR
 
 	ips, err := pkix.ParseAndValidateIPs(strings.Join(opts.IP, ","))
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "problem parsing and validating IPs: %s", opts.IP)
+		return nil, nil, errors.Wrapf(err, "parsing and validating IPs '%s'", opts.IP)
 	}
 
 	uris, err := pkix.ParseAndValidateURIs(strings.Join(opts.URI, ","))
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "problem parsing and validating URIs: %s", opts.URI)
+		return nil, nil, errors.Wrapf(err, "parsing and validating URIs '%s'", opts.URI)
 	}
 
 	name, err := opts.getCertificateRequestName()
@@ -204,7 +204,7 @@ func (opts *CertificateOptions) CertRequestInMemory() (*pkix.CertificateSigningR
 		name,
 	)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "problem creating certificate request")
+		return nil, nil, errors.Wrap(err, "creating certificate request")
 	}
 
 	opts.csr = csr
@@ -222,7 +222,7 @@ func (opts *CertificateOptions) PutCertRequestFromMemory(wd Depot) error {
 
 	formattedName, err := opts.getFormattedCertificateRequestName()
 	if err != nil {
-		return errors.Wrap(err, "problem getting formatted name")
+		return errors.Wrap(err, "getting formatted name")
 	}
 
 	csrExists, err := CheckCertificateSigningRequestWithError(wd, formattedName)
@@ -238,16 +238,16 @@ func (opts *CertificateOptions) PutCertRequestFromMemory(wd Depot) error {
 	}
 
 	if err = depot.PutCertificateSigningRequest(wd, formattedName, opts.csr); err != nil {
-		return errors.Wrap(err, "problem saving certificate request")
+		return errors.Wrap(err, "saving certificate request")
 	}
 
 	if opts.Passphrase != "" {
 		if err = depot.PutEncryptedPrivateKey(wd, formattedName, opts.key, []byte(opts.Passphrase)); err != nil {
-			return errors.Wrap(err, "problem saving encrypted private key")
+			return errors.Wrap(err, "saving encrypted private key")
 		}
 	} else {
 		if err = depot.PutPrivateKey(wd, formattedName, opts.key); err != nil {
-			return errors.Wrap(err, "problem saving private key error")
+			return errors.Wrap(err, "saving private key")
 		}
 	}
 
@@ -258,7 +258,7 @@ func (opts *CertificateOptions) PutCertRequestFromMemory(wd Depot) error {
 func (opts *CertificateOptions) Sign(wd Depot) error {
 	_, err := opts.SignInMemory(wd)
 	if err != nil {
-		return errors.Wrap(err, "problem signing certificate request")
+		return errors.Wrap(err, "signing certificate request")
 	}
 
 	return opts.PutCertFromMemory(wd)
@@ -291,36 +291,36 @@ func (opts *CertificateOptions) SignInMemory(wd Depot) (*pkix.Certificate, error
 		var err error
 		csr, err = depot.GetCertificateSigningRequest(wd, formattedReqName)
 		if err != nil {
-			return nil, errors.Wrap(err, "problem getting host's certificate signing request")
+			return nil, errors.Wrap(err, "getting host's certificate signing request")
 		}
 	}
 	crt, err := depot.GetCertificate(wd, formattedCAName)
 	if err != nil {
-		return nil, errors.Wrap(err, "problem getting CA certificate")
+		return nil, errors.Wrap(err, "getting CA certificate")
 	}
 
 	// Validate that crt is allowed to sign certificates.
 	rawCrt, err := crt.GetRawCertificate()
 	if err != nil {
-		return nil, errors.Wrap(err, "problem getting raw CA certificate")
+		return nil, errors.Wrap(err, "getting raw CA certificate")
 	}
 	// We punt on checking BasicConstraintsValid and checking MaxPathLen.
 	// The goal is to prevent accidentally creating invalid certificates,
 	// not protecting against malicious input.
 	if !rawCrt.IsCA {
-		return nil, errors.Errorf("%s is not allowed to sign certificates", opts.CA)
+		return nil, errors.Errorf("'%s' is not allowed to sign certificates", opts.CA)
 	}
 
 	var key *pkix.Key
 	if opts.CAPassphrase == "" {
 		key, err = depot.GetPrivateKey(wd, formattedCAName)
 		if err != nil {
-			return nil, errors.Wrap(err, "problem getting unencrypted (assumed) CA key")
+			return nil, errors.Wrap(err, "getting unencrypted (assumed) CA key")
 		}
 	} else {
 		key, err = depot.GetEncryptedPrivateKey(wd, formattedCAName, []byte(opts.CAPassphrase))
 		if err != nil {
-			return nil, errors.Wrap(err, "problem getting encrypted CA key")
+			return nil, errors.Wrap(err, "getting encrypted CA key")
 		}
 	}
 
@@ -332,7 +332,7 @@ func (opts *CertificateOptions) SignInMemory(wd Depot) (*pkix.Certificate, error
 		crtOut, err = pkix.CreateCertificateHost(crt, key, csr, expiresTime)
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "problem creating certificate")
+		return nil, errors.Wrap(err, "creating certificate")
 	}
 
 	opts.crt = crtOut
@@ -357,16 +357,16 @@ func (opts *CertificateOptions) PutCertFromMemory(wd Depot) error {
 	}
 
 	if err := depot.PutCertificate(wd, formattedReqName, opts.crt); err != nil {
-		return errors.Wrap(err, "problem saving certificate")
+		return errors.Wrap(err, "saving certificate")
 	}
 
 	if md, ok := wd.(*mongoDepot); ok {
 		rawCrt, err := opts.crt.GetRawCertificate()
 		if err != nil {
-			return errors.Wrap(err, "problem getting raw certificate")
+			return errors.Wrap(err, "getting raw certificate")
 		}
 		if err = md.PutTTL(formattedReqName, rawCrt.NotAfter); err != nil {
-			return errors.Wrap(err, "problem saving certificate TTL")
+			return errors.Wrap(err, "saving certificate TTL")
 		}
 	}
 
@@ -376,7 +376,7 @@ func (opts *CertificateOptions) PutCertFromMemory(wd Depot) error {
 func getFormattedCertificateRequestName(name string) (string, error) {
 	filenameAcceptable, err := regexp.Compile("[^a-zA-Z0-9._-]")
 	if err != nil {
-		return "", errors.Wrap(err, "error compiling regex")
+		return "", errors.Wrap(err, "compiling regex for acceptable certificate request names")
 	}
 	return string(filenameAcceptable.ReplaceAll([]byte(name), []byte("_"))), nil
 }
@@ -384,7 +384,7 @@ func getFormattedCertificateRequestName(name string) (string, error) {
 func (opts CertificateOptions) getFormattedCertificateRequestName() (string, error) {
 	name, err := opts.getCertificateRequestName()
 	if err != nil {
-		return "", errors.Wrap(err, "could not get name for certificate request")
+		return "", errors.Wrap(err, "getting name for certificate request")
 	}
 	return getFormattedCertificateRequestName(name)
 }
@@ -405,11 +405,11 @@ func (opts CertificateOptions) getOrCreatePrivateKey() (*pkix.Key, error) {
 	if opts.Key != "" {
 		keyBytes, err := ioutil.ReadFile(opts.Key)
 		if err != nil {
-			return nil, errors.Wrapf(err, "problem reading key from %s", opts.Key)
+			return nil, errors.Wrapf(err, "reading key '%s'", opts.Key)
 		}
 		key, err = pkix.NewKeyFromPrivateKeyPEM(keyBytes)
 		if err != nil {
-			return nil, errors.Wrapf(err, "problem getting key from PEM")
+			return nil, errors.Wrap(err, "getting key from PEM")
 		}
 	} else {
 		if opts.KeyBits == 0 {
@@ -418,7 +418,7 @@ func (opts CertificateOptions) getOrCreatePrivateKey() (*pkix.Key, error) {
 		var err error
 		key, err = pkix.CreateRSAKey(opts.KeyBits)
 		if err != nil {
-			return nil, errors.Wrap(err, "problem creating RSA key")
+			return nil, errors.Wrap(err, "creating RSA key")
 		}
 	}
 	return key, nil
@@ -445,10 +445,10 @@ func getNameAndKey(tag *depot.Tag) (string, string, error) {
 // request and signing it.
 func (opts *CertificateOptions) CreateCertificate(wd Depot) error {
 	if err := opts.CertRequest(wd); err != nil {
-		return errors.Wrap(err, "problem creating the certificate request")
+		return errors.Wrap(err, "creating the certificate request")
 	}
 	if err := opts.Sign(wd); err != nil {
-		return errors.Wrap(err, "problem signing the certificate request")
+		return errors.Wrap(err, "signing the certificate request")
 	}
 
 	return nil
@@ -471,7 +471,7 @@ func (opts *CertificateOptions) CreateCertificateOnExpiration(wd Depot, after ti
 	} else if exists {
 		dne, err = DeleteOnExpiration(wd, opts.CommonName, after)
 		if err != nil {
-			return created, errors.Wrap(err, "problem deleting expiring certificate")
+			return created, errors.Wrap(err, "deleting expiring certificate")
 		}
 	}
 
@@ -480,14 +480,14 @@ func (opts *CertificateOptions) CreateCertificateOnExpiration(wd Depot, after ti
 		created = true
 	}
 
-	return created, errors.Wrap(err, "problem creating certificate")
+	return created, errors.Wrap(err, "creating certificate")
 }
 
 // ValidityBounds returns the date range for which the certificate is valid.
 func ValidityBounds(wd Depot, name string) (time.Time, time.Time, error) {
 	rawCert, err := getRawCertificate(wd, name)
 	if err != nil {
-		return time.Time{}, time.Time{}, errors.Wrap(err, "problem getting raw certificate")
+		return time.Time{}, time.Time{}, errors.Wrap(err, "getting raw certificate")
 	}
 
 	return rawCert.NotBefore, rawCert.NotAfter, nil
@@ -507,25 +507,25 @@ func DeleteOnExpiration(wd Depot, name string, after time.Duration) (bool, error
 
 	rawCert, err := getRawCertificate(wd, name)
 	if err != nil {
-		return deleted, errors.Wrap(err, "problem getting raw certificate")
+		return deleted, errors.Wrap(err, "getting raw certificate")
 	}
 
 	if rawCert.NotAfter.Before(time.Now().Add(after)) {
 		err = depot.DeleteCertificate(wd, name)
 		if err != nil {
-			return deleted, errors.Wrap(err, "problem deleting expiring certificate")
+			return deleted, errors.Wrap(err, "deleting expiring certificate")
 		}
 
 		if !rawCert.IsCA {
 			err = depot.DeleteCertificateSigningRequest(wd, name)
 			if err != nil {
-				return deleted, errors.Wrap(err, "problem deleting expiring certificate signing request")
+				return deleted, errors.Wrap(err, "deleting expiring certificate signing request")
 			}
 		}
 
 		err = wd.Delete(depot.PrivKeyTag(name))
 		if err != nil {
-			return deleted, errors.Wrap(err, "problem deleting expiring certificate key")
+			return deleted, errors.Wrap(err, "deleting expiring certificate key")
 		}
 
 		deleted = true
@@ -537,7 +537,7 @@ func DeleteOnExpiration(wd Depot, name string, after time.Duration) (bool, error
 func getRawCertificate(d Depot, name string) (*x509.Certificate, error) {
 	cert, err := depot.GetCertificate(d, name)
 	if err != nil {
-		return nil, errors.Wrap(err, "problem getting certificate from the depot")
+		return nil, errors.Wrap(err, "getting certificate from the depot")
 	}
 
 	rawCert, err := cert.GetRawCertificate()

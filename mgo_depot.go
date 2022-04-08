@@ -20,7 +20,7 @@ type mgoCertDepot struct {
 func NewMgoCertDepot(opts *MongoDBOptions) (Depot, error) {
 	s, err := mgo.DialWithTimeout(opts.MongoDBURI, opts.MongoDBDialTimeout)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not connect to db %s", opts.MongoDBURI)
+		return nil, errors.Wrapf(err, "connecting to DB URI '%s'", opts.MongoDBURI)
 	}
 	s.SetSocketTimeout(opts.MongoDBSocketTimeout)
 
@@ -35,7 +35,7 @@ func NewMgoCertDepotWithSession(s *mgo.Session, opts *MongoDBOptions) (Depot, er
 	}
 
 	if err := opts.validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid options!")
+		return nil, errors.Wrap(err, "invalid options")
 	}
 
 	return &mgoCertDepot{
@@ -54,7 +54,7 @@ func (m *mgoCertDepot) Put(tag *depot.Tag, data []byte) error {
 
 	name, key, err := getNameAndKey(tag)
 	if err != nil {
-		return errors.Wrapf(err, "could not format name %s", name)
+		return errors.Wrapf(err, "formatting name '%s'", name)
 	}
 	session := m.session.Clone()
 	defer session.Close()
@@ -62,7 +62,7 @@ func (m *mgoCertDepot) Put(tag *depot.Tag, data []byte) error {
 	update := bson.M{"$set": bson.M{key: string(data)}}
 	changeInfo, err := session.DB(m.databaseName).C(m.collectionName).UpsertId(name, update)
 	if err != nil {
-		return errors.Wrap(err, "problem adding data to the database")
+		return errors.Wrap(err, "adding data to the database")
 	}
 	grip.Debug(message.Fields{
 		"db":     m.databaseName,
@@ -143,7 +143,7 @@ func (m *mgoCertDepot) CheckWithError(tag *depot.Tag) (bool, error) {
 func (m *mgoCertDepot) Get(tag *depot.Tag) ([]byte, error) {
 	name, key, err := getNameAndKey(tag)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not format name %s", name)
+		return nil, errors.Wrapf(err, "formatting name '%s'", name)
 	}
 	session := m.session.Clone()
 	defer session.Close()
@@ -151,9 +151,9 @@ func (m *mgoCertDepot) Get(tag *depot.Tag) ([]byte, error) {
 	u := &User{}
 	if err = session.DB(m.databaseName).C(m.collectionName).FindId(name).One(u); err != nil {
 		if err == mgo.ErrNotFound {
-			return nil, errors.Errorf("could not find %s in the database", name)
+			return nil, errors.Errorf("could not find name '%s' in the database", name)
 		}
-		return nil, errors.Wrapf(err, "problem looking up %s in the database", name)
+		return nil, errors.Wrapf(err, "looking up name '%s' in the database", name)
 	}
 
 	var data []byte
@@ -178,14 +178,14 @@ func (m *mgoCertDepot) Get(tag *depot.Tag) ([]byte, error) {
 func (m *mgoCertDepot) Delete(tag *depot.Tag) error {
 	name, key, err := getNameAndKey(tag)
 	if err != nil {
-		return errors.Wrapf(err, "could not format name %s", name)
+		return errors.Wrapf(err, "formatting name '%s'", name)
 	}
 	session := m.session.Clone()
 	defer session.Close()
 
 	update := bson.M{"$unset": bson.M{key: ""}}
 	if err = m.session.DB(m.databaseName).C(m.collectionName).UpdateId(name, update); errNotNotFound(err) {
-		return errors.Wrapf(err, "problem deleting %s.%s from the database", name, key)
+		return errors.Wrapf(err, "deleting '%s.%s' from the database", name, key)
 	}
 
 	return nil

@@ -99,6 +99,7 @@ func (opts *CertificateOptions) Init(wd Depot) error {
 		opts.Province,
 		opts.Locality,
 		opts.CommonName,
+		[]string{},
 	)
 	if err != nil {
 		return errors.Wrap(err, "creating certificate authority")

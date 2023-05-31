@@ -79,11 +79,6 @@ functions:
       params:
         working_dir: certdepot
         command: make check-mongod
-    - command: subprocess.exec
-      type: setup
-      params:
-        command: make init-rs
-        working_dir: certdepot
 
 #######################################
 #                Tasks                #

@@ -143,14 +143,11 @@ get-mongodb: mongodb/.get-mongodb
 get-mongosh: mongodb/.get-mongosh
 	@touch $<
 start-mongod: mongodb/.get-mongodb
-	./mongodb/mongod --dbpath ./mongodb/db_files --port 27017 --replSet amboy
+	./mongodb/mongod --dbpath ./mongodb/db_files
 	@echo "waiting for mongod to start up"
 check-mongod: mongodb/.get-mongodb mongodb/.get-mongosh
 	./mongosh/mongosh --nodb ./scripts/waitForMongo.js
 	@echo "mongod is up"
-init-rs: mongodb/.get-mongodb mongodb/.get-mongosh
-	./mongosh/mongosh --eval 'rs.initiate()'
-phony += get-mongodb get-mongosh start-mongod check-mongod init-rs
 # end mongodb targets
 
 # start module management targets

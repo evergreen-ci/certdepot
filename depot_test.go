@@ -14,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	mgo "gopkg.in/mgo.v2"
 )
 
 func getTagPath(tag *depot.Tag) string {
@@ -37,23 +36,24 @@ func TestDepot(t *testing.T) {
 	var tempDir string
 	var data []byte
 
-	session, err := mgo.DialWithTimeout("mongodb://localhost:27017", 2*time.Second)
-	require.NoError(t, err)
-	session.SetSocketTimeout(time.Hour)
 	const databaseName = "certDepot"
 	const collectionName = "certs"
-	defer func() {
-		err = session.DB(databaseName).C(collectionName).DropCollection()
-		if err != nil {
-			assert.Equal(t, "ns not found", err.Error())
-		}
-	}()
 
 	ctx := context.TODO()
 	connctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(connctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	require.NoError(t, err)
+
+	defer func() {
+		dropContext, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+
+		err = client.Database(databaseName).Collection(collectionName).Drop(dropContext)
+		if err != nil {
+			assert.Equal(t, "ns not found", err.Error())
+		}
+	}()
 
 	type testCase struct {
 		name string
@@ -150,180 +150,6 @@ func TestDepot(t *testing.T) {
 						assert.Error(t, d.Delete(PrivKeyTag(name)))
 						assert.Error(t, d.Delete(CsrTag(name)))
 						assert.Error(t, d.Delete(CrlTag(name)))
-					},
-				},
-			},
-		},
-		{
-			name: "LegacyMongoDB",
-			setup: func() Depot {
-				return &mgoCertDepot{
-					session:        session,
-					databaseName:   databaseName,
-					collectionName: collectionName,
-				}
-			},
-			bootstrap: func(t *testing.T) Depot {
-				conf := BootstrapDepotConfig{
-					MongoDepot: &MongoDBOptions{
-						DatabaseName:   databaseName,
-						CollectionName: collectionName,
-						DepotOptions: DepotOptions{
-							CA:                "root",
-							DefaultExpiration: time.Minute,
-						},
-					},
-					CAName: "root",
-					CAOpts: &CertificateOptions{
-						CommonName: "root",
-						Expires:    time.Minute,
-					},
-					ServiceName: "localhost",
-					ServiceOpts: &CertificateOptions{
-						CommonName: "localhost",
-						Host:       "localhost",
-						CA:         "root",
-					},
-				}
-				var d Depot
-				d, err = BootstrapDepot(ctx, conf)
-				require.NoError(t, err)
-				return d
-			},
-			check: func(t *testing.T, tag *depot.Tag, data []byte) {
-				var name, key string
-				name, key, err = getNameAndKey(tag)
-				require.NoError(t, err)
-
-				u := &User{}
-				require.NoError(t, session.DB(databaseName).C(collectionName).FindId(name).One(u))
-				assert.Equal(t, name, u.ID)
-
-				var value string
-				switch key {
-				case userCertKey:
-					value = u.Cert
-				case userPrivateKeyKey:
-					value = u.PrivateKey
-				case userCertReqKey:
-					value = u.CertReq
-				case userCertRevocListKey:
-					value = u.CertRevocList
-				}
-				assert.Equal(t, string(data), value)
-			},
-			cleanup: func() {
-				err = session.DB(databaseName).C(collectionName).DropCollection()
-				if err != nil {
-					require.Equal(t, "ns not found", err.Error())
-				}
-			},
-			tests: []testCase{
-				{
-					name: "PutUpdates",
-					test: func(t *testing.T, d Depot) {
-						const name = "bob"
-						user := &User{
-							ID:            name,
-							Cert:          "cert",
-							PrivateKey:    "key",
-							CertReq:       "certReq",
-							CertRevocList: "certRevocList",
-						}
-						require.NoError(t, session.DB(databaseName).C(collectionName).Insert(user))
-						time.Sleep(time.Second)
-
-						certData := []byte("bob's new fake certificate")
-						assert.NoError(t, d.Put(CrtTag(name), certData))
-						u := &User{}
-						require.NoError(t, session.DB(databaseName).C(collectionName).FindId(name).One(u))
-						assert.Equal(t, name, u.ID)
-						assert.Equal(t, string(certData), u.Cert)
-						assert.Equal(t, user.PrivateKey, u.PrivateKey)
-						assert.Equal(t, user.CertReq, u.CertReq)
-						assert.Equal(t, user.CertRevocList, u.CertRevocList)
-
-						keyData := []byte("bob's new fake private key")
-						assert.NoError(t, d.Put(PrivKeyTag(name), keyData))
-						u = &User{}
-						require.NoError(t, session.DB(databaseName).C(collectionName).FindId(name).One(u))
-						assert.Equal(t, name, u.ID)
-						assert.Equal(t, string(certData), u.Cert)
-						assert.Equal(t, string(keyData), u.PrivateKey)
-						assert.Equal(t, user.CertReq, u.CertReq)
-						assert.Equal(t, user.CertRevocList, u.CertRevocList)
-
-						certReqData := []byte("bob's new fake certificate request")
-						assert.NoError(t, d.Put(CsrTag(name), certReqData))
-						u = &User{}
-						require.NoError(t, session.DB(databaseName).C(collectionName).FindId(name).One(u))
-						assert.Equal(t, name, u.ID)
-						assert.Equal(t, string(certData), u.Cert)
-						assert.Equal(t, string(keyData), u.PrivateKey)
-						assert.Equal(t, string(certReqData), u.CertReq)
-						assert.Equal(t, user.CertRevocList, u.CertRevocList)
-
-						certRevocListData := []byte("bob's new fake certificate revocation list")
-						assert.NoError(t, d.Put(CrlTag(name), certRevocListData))
-						u = &User{}
-						require.NoError(t, session.DB(databaseName).C(collectionName).FindId(name).One(u))
-						assert.Equal(t, name, u.ID)
-						assert.Equal(t, string(certData), u.Cert)
-						assert.Equal(t, string(keyData), u.PrivateKey)
-						assert.Equal(t, string(certReqData), u.CertReq)
-						assert.Equal(t, string(certRevocListData), u.CertRevocList)
-					},
-				},
-				{
-					name: "CheckReturnsFalseOnExistingUserWithNoData",
-					test: func(t *testing.T, d Depot) {
-						const name = "alice"
-						u := &User{
-							ID: name,
-						}
-						require.NoError(t, session.DB(databaseName).C(collectionName).Insert(u))
-
-						assert.False(t, d.Check(CrtTag(name)))
-						assert.False(t, d.Check(PrivKeyTag(name)))
-						assert.False(t, d.Check(CsrTag(name)))
-						assert.False(t, d.Check(CrlTag(name)))
-					},
-				},
-				{
-					name: "GetFailsOnExistingUserWithNoData",
-					test: func(t *testing.T, d Depot) {
-						const name = "bob"
-						u := &User{
-							ID: name,
-						}
-						require.NoError(t, session.DB(databaseName).C(collectionName).Insert(u))
-
-						data, err = d.Get(CrtTag(name))
-						assert.Error(t, err)
-						assert.Nil(t, data)
-
-						data, err = d.Get(PrivKeyTag(name))
-						assert.Error(t, err)
-						assert.Nil(t, data)
-
-						data, err = d.Get(CsrTag(name))
-						assert.Error(t, err)
-						assert.Nil(t, data)
-
-						data, err = d.Get(CrlTag(name))
-						assert.Error(t, err)
-						assert.Nil(t, data)
-					},
-				},
-				{
-					name: "DeleteWhenDNE",
-					test: func(t *testing.T, d Depot) {
-						const name = "bob"
-
-						assert.NoError(t, d.Delete(CrtTag(name)))
-						assert.NoError(t, d.Delete(PrivKeyTag(name)))
-						assert.NoError(t, d.Delete(CsrTag(name)))
-						assert.NoError(t, d.Delete(CrlTag(name)))
 					},
 				},
 			},

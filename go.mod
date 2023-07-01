@@ -7,7 +7,7 @@ require (
 	github.com/mongodb/grip v0.0.0-20230523210723-4c0bb7ed9da5
 	github.com/pkg/errors v0.9.1
 	github.com/square/certstrap v1.3.0
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	go.mongodb.org/mongo-driver v1.11.6
 )
 

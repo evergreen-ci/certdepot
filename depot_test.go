@@ -11,9 +11,9 @@ import (
 	"github.com/square/certstrap/depot"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func getTagPath(tag *depot.Tag) string {
@@ -40,9 +40,7 @@ func TestDepot(t *testing.T) {
 	const collectionName = "certs"
 
 	ctx := context.TODO()
-	connctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(connctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	client, err := mongo.Connect(options.Client().ApplyURI("mongodb://localhost:27017"))
 	require.NoError(t, err)
 
 	defer func() {

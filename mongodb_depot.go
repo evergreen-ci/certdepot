@@ -7,9 +7,9 @@ import (
 	"github.com/mongodb/grip/message"
 	"github.com/pkg/errors"
 	"github.com/square/certstrap/depot"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type mongoDepot struct {
@@ -27,7 +27,7 @@ func NewMongoDBCertDepot(ctx context.Context, opts *MongoDBOptions) (Depot, erro
 		return nil, errors.Wrap(err, "invalid options")
 	}
 
-	client, err := mongo.Connect(options.Client().ApplyURI(opts.MongoDBURI).SetConnectTimeout(opts.MongoDBDialTimeout))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(opts.MongoDBURI).SetConnectTimeout(opts.MongoDBDialTimeout))
 	if err != nil {
 		return nil, errors.Wrap(err, "connecting to database")
 	}

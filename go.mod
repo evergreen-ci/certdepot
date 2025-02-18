@@ -1,6 +1,6 @@
 module github.com/evergreen-ci/certdepot
 
-go 1.20
+go 1.24
 
 require (
 	github.com/mongodb/anser v0.0.0-20230501213745-c62f11870fd4

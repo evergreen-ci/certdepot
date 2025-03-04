@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func TestBootstrapDepotConfigValidate(t *testing.T) {
@@ -190,9 +190,7 @@ func TestBootstrapDepot(t *testing.T) {
 	serviceName := "test_service"
 	databaseName := "certs"
 	ctx := context.TODO()
-	connctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(connctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	client, err := mongo.Connect(options.Client().ApplyURI("mongodb://localhost:27017"))
 	require.NoError(t, err)
 	tempDepot, err := NewFileDepot("temp_depot")
 	require.NoError(t, err)

@@ -93,8 +93,8 @@ github.com/lufia/plan9stats v0.0.0-20231016141302-07b5767bb0ed h1:036IscGBfJsFIg
 github.com/lufia/plan9stats v0.0.0-20231016141302-07b5767bb0ed/go.mod h1:ilwx/Dta8jXAgpFYFvSWEMwxmbWXyiUHkd5FwyKhb5k=
 github.com/mattn/go-xmpp v0.0.1 h1:njHom/3EP3ynacLHX9lBpKMMknYL76ic/19fPsR6MB8=
 github.com/mattn/go-xmpp v0.0.1/go.mod h1:Cs5mF0OsrRRmhkyOod//ldNPOwJsrBvJ+1WRspv0xoc=
-github.com/mongodb/anser v0.0.0-20250225172621-d9ea322b5742 h1:WDs+I2nTd8zk5COLlqDnjlYQIhGaVnW7VzeyRo1pQik=
-github.com/mongodb/anser v0.0.0-20250225172621-d9ea322b5742/go.mod h1:rd8SZJq3VtwqVnGjCG+uauLzsEA2mgRGpxPHX8vhQU4=
+github.com/mongodb/anser v0.0.0-20250304192308-25ea0fd7a126 h1:ShJAfKJXo7aDbhegTCUMnSeadqofjM2P07c+0bhln3A=
+github.com/mongodb/anser v0.0.0-20250304192308-25ea0fd7a126/go.mod h1:696uUeeKWq6hAxXvRjCMmfzhxsAJD4FB8yyOLsgt09g=
 github.com/mongodb/grip v0.0.0-20250224221724-fc8adcb1fe8e h1:Uhz92ZN9SrFHxkCLOce+QPZEdgnXPojABh+/wo2lDBE=
 github.com/mongodb/grip v0.0.0-20250224221724-fc8adcb1fe8e/go.mod h1:EC0VantnUpbAGa9zia6/i+X1kjnqAIHKi9JWcjJGlYc=
 github.com/peterhellberg/link v1.2.0 h1:UA5pg3Gp/E0F2WdX7GERiNrPQrM1K6CVJUUWfHa4t6c=

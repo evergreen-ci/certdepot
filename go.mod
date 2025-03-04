@@ -3,7 +3,7 @@ module github.com/evergreen-ci/certdepot
 go 1.24
 
 require (
-	github.com/mongodb/anser v0.0.0-20250225172621-d9ea322b5742
+	github.com/mongodb/anser v0.0.0-20250304192308-25ea0fd7a126
 	github.com/mongodb/grip v0.0.0-20250224221724-fc8adcb1fe8e
 	github.com/pkg/errors v0.9.1
 	github.com/square/certstrap v1.3.0

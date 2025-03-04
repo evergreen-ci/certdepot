@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/square/certstrap/depot"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 // BootstrapDepotConfig contains options for BootstrapDepot. Must provide

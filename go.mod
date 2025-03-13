@@ -8,7 +8,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/square/certstrap v1.3.0
 	github.com/stretchr/testify v1.8.4
-	go.mongodb.org/mongo-driver/v2 v2.1.0
+	go.mongodb.org/mongo-driver v1.17.3
 )
 
 require (
@@ -44,6 +44,7 @@ require (
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/lufia/plan9stats v0.0.0-20231016141302-07b5767bb0ed // indirect
 	github.com/mattn/go-xmpp v0.0.1 // indirect
+	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/peterhellberg/link v1.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect

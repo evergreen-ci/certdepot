@@ -81,7 +81,7 @@ func (m *mongoDepot) Put(tag *depot.Tag, data []byte) error {
 	if err != nil {
 		return errors.Wrap(err, "adding data to the database")
 	}
-	grip.Debug(message.Fields{
+	grip.Debug(m.ctx, message.Fields{
 		"db":       m.databaseName,
 		"coll":     m.collectionName,
 		"id":       name,
@@ -103,7 +103,7 @@ func (m *mongoDepot) Check(tag *depot.Tag) bool {
 	u := &User{}
 
 	err = m.client.Database(m.databaseName).Collection(m.collectionName).FindOne(m.ctx, bson.D{{Key: userIDKey, Value: name}}).Decode(u)
-	grip.WarningWhen(errNotNoDocuments(err), message.WrapError(err, message.Fields{
+	grip.WarningWhen(m.ctx, errNotNoDocuments(err), message.WrapError(err, message.Fields{
 		"db":   m.databaseName,
 		"coll": m.collectionName,
 		"id":   name,

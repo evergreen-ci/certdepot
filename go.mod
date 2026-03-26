@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/mongodb/anser v0.0.0-20251209174952-11a8088811aa
-	github.com/mongodb/grip v0.0.0-20251203205830-b5c5c666ab94
+	github.com/mongodb/grip v0.0.0-20260325175240-dee15316ed15
 	github.com/pkg/errors v0.9.1
 	github.com/square/certstrap v1.3.0
 	github.com/stretchr/testify v1.10.0
